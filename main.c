@@ -26,7 +26,6 @@ int main(int argc, char **argv) {
     }; /* An Array of characters as the starting board state */
 
     printf("The Cactus - a chess playing AI that is supposed to defeat humans.\n"); /* Opening Message */
-    printf("%s\n", initial_state); /* Debugging */
     
     return 0;
 }
