@@ -7,8 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-// Includes
-// #include "bitboards.h"
+#include "bitboards.h"
 // #include "bitboard_utils.h"
 
 int main(int argc, char **argv) {
