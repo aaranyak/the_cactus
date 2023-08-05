@@ -26,7 +26,7 @@ void init_board(Bitboard *board, char init_state[64], int side_to_move) {
     char piece_type;
     for (int y = 0; y < 8; y++) { /* Loop through the rows in the array */ 
         for (int x = 0; x < 8; x++) { /* Loop through all the columns in a row */
-            position = (U64)1 << ((7 - y) * 8) + 8; /* Get actual position of the bit in the bitboard */
+            position = (U64)1 << ((7 - y) * 8) + x; /* Get actual position of the bit in the bitboard */
             piece_type = init_state[(y * 8) + x]; /* Get the piece type character */
             for (int p = 0; p < 12; p++) { /* loop through piece types */
                 if (letters[p] == piece_type) board->pieces[p] |= position; /* Add piece to bb */
@@ -55,7 +55,6 @@ void render_board(Bitboard *board) {
             for (int p = 0; p < 12; p++) { /* Loop through piece types */
                 if (position & board->pieces[p]) current_letter = letters[p]; /* Set the piece type */
             }
-            printf("%c %d %#010x\n",current_letter, y * 8 + x, position);            
             sprintf(board_print, "%s %c |", board_print, current_letter); /* Blank square (just for now) */
         }
         sprintf(board_print, "%s\n   +---+---+---+---+---+---+---+---+\n", board_print); /* Next line */

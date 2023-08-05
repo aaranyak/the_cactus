@@ -16,14 +16,14 @@ int main(int argc, char **argv) {
 
     // The board state to start with
     char initial_state[64] = {
-        "rnbqkbnr"
-        "pppppppp"
-        "        "
-        "        "
-        "        "
-        "        "
-        "PPPPPPPP"
-        "RNBQKBNR"
+        'r','n','b','q','k','b','n','r',
+        'p','p','p','p','p','p','p','p',
+        ' ',' ',' ',' ',' ',' ',' ',' ',
+        ' ',' ',' ',' ',' ',' ',' ',' ',
+        ' ',' ',' ',' ',' ',' ',' ',' ',
+        ' ',' ',' ',' ',' ',' ',' ',' ',
+        'P','P','P','P','P','P','P','P',
+        'R','N','B','Q','K','B','N','R',
     }; /* An Array of characters as the starting board state */
     
     // Init board
