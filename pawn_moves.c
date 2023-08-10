@@ -10,7 +10,7 @@
 #include "lookup_tables.h"
 #include "move_gen_utils.h"
 
-void add_pawn_moves(U64 move_set, Bitboard *board, move_list_t *move_list, int pawn_index, U64 promotion_check, U64 enpas_check); /* Forward decleration */
+void add_pawn_moves(U64 move_set, Bitboard *board, move_list_t *move_list, int pawn_index, U64 promotion_check, U64 enpas_check, U64 encap_check); /* Forward decleration */
 
 void generate_pawn_moves(move_list_t *move_list, Bitboard *board) {
     /* Generates all pawn moves from a position, and adds them to move list */
@@ -27,7 +27,8 @@ void generate_pawn_moves(move_list_t *move_list, Bitboard *board) {
     // Check for next move.
     U64 double_push; /* Double pawn push check */
     U64 promotion_check; /* Check if pawn can be promoted */
-    U64 block_check;
+    U64 block_check; /* Single push check (used for checking if double push is possible */
+    U64 enpas_move; /* Check for an en-passant capture */
     // Main generation loop
     while (pawns) { /* Loop through every pawn */
         position = pawns & -pawns; /* Get next pawn (Isolate LSB) */
@@ -45,16 +46,22 @@ void generate_pawn_moves(move_list_t *move_list, Bitboard *board) {
             double_push = (block_check) /* If not blocked */ ? ((position >> 16) /* Shift up */ & ranks[32] /* Check for 5'th rank */) /* Check for blockers */ & ~(enemy_mask | own_mask) : 0; /* Add double pawn pushing */
             move_set |= block_check | double_push; /* Add them to move set */
         }
+        // Check for en passant
+        enpas_move = (side) ? pawn_attacks_w[pawn_index] : pawn_attacks_b[pawn_index]; /* Lookup pawn capture moves */
+        enpas_move &= board->enpas; /* Check if the move is an en passant move */
+        if (!side) enpas_move &= ranks[16]; /* Rank check */
+        else enpas_move &= ranks[40]; /* Ditto */
+        move_set |= enpas_move; /* Add en-passant captures to move list */
         // Check for promotion
         promotion_check = (side) ? move_set & ranks[56] : move_set & ranks[0]; /* Check if promotion is possible */
         // Add all the moves to the move list
-        add_pawn_moves(move_set, board, move_list, pawn_index, promotion_check, double_push); /* Add all the pawn moves to the move list */
+        add_pawn_moves(move_set, board, move_list, pawn_index, promotion_check, double_push, enpas_move); /* Add all the pawn moves to the move list */
         // Reset LSB
         pawns ^= position; /* Reset the LSB (remove the pawn from the pawns list */
     }
 }
 
-void add_pawn_moves(U64 move_set, Bitboard *board, move_list_t *move_list, int pawn_index, U64 promotion_check, U64 enpas_check) {
+void add_pawn_moves(U64 move_set, Bitboard *board, move_list_t *move_list, int pawn_index, U64 promotion_check, U64 enpas_check, U64 encap_check) {
     /* Add pawn moves to the move list from a move bitboard */
     int side = board->side; /* Makes code writing easier */
     U64 enemy_mask = colour_mask(board, !side); /* Get the oppoenent mask */
@@ -74,6 +81,10 @@ void add_pawn_moves(U64 move_set, Bitboard *board, move_list_t *move_list, int p
         // Create move and add move
         move = set_move(pawn_index /* from */, pos_index /* to */, (side) ? pawn_w : pawn_b /* piece type */,(cap_flag) ? cap_piece : 0 /* captured piece id */); /* Create a new move code */
         if (cap_flag) move |= MM_CAP; /* If this is a capture move, add the capture flag to the move */
+        // Enpas Capture
+        if (position & encap_check) move |= MM_EPC; /* Make this an en passant capture move if it is one */
+        // Double pawn push
+        if (position & enpas_check) move |= MM_DPP; /* Make this a double pawn push if it is one */
         // Add promotion moves.
         if (promotion_check) {
             // Create a promotion move

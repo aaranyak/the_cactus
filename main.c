@@ -12,6 +12,7 @@
 #include "move_utils.h"
 #include "pawn_moves.h"
 #include "move_gen_utils.h"
+#include "lookup_tables.h"
 
 Bitboard *board;
 int main(int argc, char **argv) {
@@ -31,21 +32,20 @@ int main(int argc, char **argv) {
 
     char test_position[64] = {
         'r','n','b','q','k','b','n','r',
-        'p','p',' ','p','p','p','p','p',
-        ' ',' ',' ',' ','R',' ',' ',' ',
+        'p','p','p',' ','p','p','p','p',
         ' ',' ',' ',' ',' ',' ',' ',' ',
         ' ',' ',' ',' ',' ',' ',' ',' ',
+        ' ',' ',' ','P','p',' ',' ',' ',
         ' ',' ',' ',' ',' ',' ',' ',' ',
-        ' ',' ','p',' ','p',' ',' ',' ',
-        ' ',' ',' ',' ','P','Q',' ',' ',
+        'P','P','P','P','P','P','P','P',
+        'R','N','B','Q','K','B','N','R',
     }; /* Starting position to test board states on */
     
     // Init board
     board = (Bitboard*)malloc(sizeof(Bitboard)); /* Allocate space for bitboard */
-    init_board(board, test_position, 1); /* Initialize board */
-    
+    init_board(board, test_position, 0); /* Initialize board */
+    board->enpas = files[3]; /* Test en passant capture */ 
     printf("The Cactus - a chess playing AI that is supposed to defeat humans.\n\n"); /* Opening Message */
-
     render_board(board); /* Display board */
 
     // Test pawn move generation

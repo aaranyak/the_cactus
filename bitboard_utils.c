@@ -36,7 +36,7 @@ void init_board(Bitboard *board, char init_state[64], int side_to_move) {
 
     // Set everything else
     board->castling_rights = W_CASTLE | B_CASTLE; /* Enable castling on both sides */
-    board->side =  (side_to_move == 0);
+    board->side = side_to_move != 0;
 }
 
 void render_board(Bitboard *board) {

@@ -25,7 +25,7 @@ typedef unsigned int move_t; /* a move is basically an unsigned int, with parts 
 #define MM_DPP 0x02000000 /* Flag for double pawn push */
 #define MM_CAS 0x04000000 /* Castling flag bitmask */
 #define MM_CSD 0x08000000 /* Side to castle flag */
-#define MM_EPC 0x01000000 /* EP Capture Flag */
+#define MM_EPC 0x10000000 /* EP Capture Flag */
 #define MM_PRO 0x20000000 /* Pawn promotion flag */
 #define MM_PPP 0xc0000000 /* Promote to piece flag */
 // Bitshifts for the move (>>)

@@ -50,7 +50,8 @@ void print_move(move_t move) {
     char to[3]; /* The to square */
     get_position_name((move & MM_FROM) >> MS_FROM, from); /* Get the position name */
     get_position_name((move & MM_TO) >> MS_TO, to); /* Get the position name */
-    if ((move & MM_CAP) && (move & MM_PRO)) printf("Move %s from %s to %s, capturing %s and promoting to %s.\n", pieces[(move & MM_PIECE) >> MS_PIECE], from, to, pieces[(move & MM_EAT) >> MS_EAT], pieces[(move & MM_PPP) >> MS_PPP]);
+    if (move & MM_EPC) printf("Move %s from %s to %s and make an en passant capture.\n", pieces[(move & MM_PIECE) >> MS_PIECE], from, to);
+    else if ((move & MM_CAP) && (move & MM_PRO)) printf("Move %s from %s to %s, capturing %s and promoting to %s.\n", pieces[(move & MM_PIECE) >> MS_PIECE], from, to, pieces[(move & MM_EAT) >> MS_EAT], pieces[(move & MM_PPP) >> MS_PPP]);
     else if (move & MM_PRO) printf("Move %s from %s to %s and promote to %s.\n", pieces[(move & MM_PIECE) >> MS_PIECE], from, to, pieces[(move & MM_PPP) >> MS_PPP]);
 
     else if (move & MM_CAP) printf("Move %s from %s to %s, capturing %s.\n", pieces[(move & MM_PIECE) >> MS_PIECE], from, to, pieces[(move & MM_EAT) >> MS_EAT]);
