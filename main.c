@@ -1,5 +1,4 @@
-/* The Cactus - a chess playing AI that is supposed to defeat humans.
- *  -> Uses Bitboard representation
+/* The Cactus
  *  -> Minmax Search with alpha-beta pruning
  *  -> Iterative deepening method
  *  -> Written in C
@@ -9,6 +8,10 @@
 #include <stdlib.h>
 #include "bitboards.h"
 #include "bitboard_utils.h"
+#include "moves.h"
+#include "move_utils.h"
+#include "pawn_moves.h"
+#include "move_gen_utils.h"
 
 Bitboard *board;
 int main(int argc, char **argv) {
@@ -25,14 +28,34 @@ int main(int argc, char **argv) {
         'P','P','P','P','P','P','P','P',
         'R','N','B','Q','K','B','N','R',
     }; /* An Array of characters as the starting board state */
+
+    char test_position[64] = {
+        'r','n','b','q','k','b','n','r',
+        'p','p',' ','p','p','p','p','p',
+        ' ',' ',' ',' ','R',' ',' ',' ',
+        ' ',' ',' ',' ',' ',' ',' ',' ',
+        ' ',' ',' ',' ',' ',' ',' ',' ',
+        ' ',' ',' ',' ',' ',' ',' ',' ',
+        ' ',' ','p',' ','p',' ',' ',' ',
+        ' ',' ',' ',' ','P','Q',' ',' ',
+    }; /* Starting position to test board states on */
     
     // Init board
     board = (Bitboard*)malloc(sizeof(Bitboard)); /* Allocate space for bitboard */
-    init_board(board, initial_state, 0); /* Initialize board */
+    init_board(board, test_position, 1); /* Initialize board */
     
     printf("The Cactus - a chess playing AI that is supposed to defeat humans.\n\n"); /* Opening Message */
 
     render_board(board); /* Display board */
 
+    // Test pawn move generation
+    move_list_t pawn_moves = {0,0}; /* Initialize an empty move list */
+    printf("Pawn Moves:\n");
+    generate_pawn_moves(&pawn_moves, board); /* Generate pawn moves */
+    for (int i = 0; i < pawn_moves.count; i++) { /* Loop through all the moves */
+        printf("    %d) ", i + 1);
+        print_move(pawn_moves.moves[i]); /* Print move */
+    }
+    printf("\n");
     return 0;
 }

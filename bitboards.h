@@ -29,4 +29,7 @@ enum { /* Piece ids */
 #define W_CASTLE 3
 #define B_CASTLE 12
 
+// Bitwise operation hardware instructions.
+#define bitscan(x) __builtin_ctzll(x) /* Bitscan Forward */
+
 #endif
