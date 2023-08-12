@@ -11,6 +11,7 @@
 #include "moves.h"
 #include "move_utils.h"
 #include "pawn_moves.h"
+#include "king_moves.h"
 #include "move_gen_utils.h"
 #include "lookup_tables.h"
 
@@ -31,12 +32,12 @@ int main(int argc, char **argv) {
     }; /* An Array of characters as the starting board state */
 
     char test_position[64] = {
-        'r','n','b','q','k','b','n','r',
-        'p','p','p',' ','p','p','p','p',
+        'r','n','b','q',' ','b','n','r',
+        'p','p','p','p','p',' ','p','p',
         ' ',' ',' ',' ',' ',' ',' ',' ',
         ' ',' ',' ',' ',' ',' ',' ',' ',
-        ' ',' ',' ','P','p',' ',' ',' ',
-        ' ',' ',' ',' ',' ',' ',' ',' ',
+        ' ',' ',' ',' ',' ','p',' ',' ',
+        ' ',' ',' ',' ','k',' ',' ',' ',
         'P','P','P','P','P','P','P','P',
         'R','N','B','Q','K','B','N','R',
     }; /* Starting position to test board states on */
@@ -44,17 +45,16 @@ int main(int argc, char **argv) {
     // Init board
     board = (Bitboard*)malloc(sizeof(Bitboard)); /* Allocate space for bitboard */
     init_board(board, test_position, 0); /* Initialize board */
-    board->enpas = files[3]; /* Test en passant capture */ 
     printf("The Cactus - a chess playing AI that is supposed to defeat humans.\n\n"); /* Opening Message */
     render_board(board); /* Display board */
 
-    // Test pawn move generation
-    move_list_t pawn_moves = {0,0}; /* Initialize an empty move list */
-    printf("Pawn Moves:\n");
-    generate_pawn_moves(&pawn_moves, board); /* Generate pawn moves */
-    for (int i = 0; i < pawn_moves.count; i++) { /* Loop through all the moves */
+    // Test king move generation
+    move_list_t king_moves = {0,0}; /* Initialize an empty move list */
+    printf("King Moves:\n");
+    generate_king_moves(&king_moves, board); /* Generate king moves */
+    for (int i = 0; i < king_moves.count; i++) { /* Loop through all the moves */
         printf("    %d) ", i + 1);
-        print_move(pawn_moves.moves[i]); /* Print move */
+        print_move(king_moves.moves[i]); /* Print move */
     }
     printf("\n");
     return 0;

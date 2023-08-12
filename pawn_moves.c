@@ -10,7 +10,7 @@
 #include "lookup_tables.h"
 #include "move_gen_utils.h"
 
-void add_pawn_moves(U64 move_set, Bitboard *board, move_list_t *move_list, int pawn_index, U64 promotion_check, U64 enpas_check, U64 encap_check); /* Forward decleration */
+void add_pawn_moves(U64 move_set, Bitboard *board, move_list_t *move_list, int pawn_index, U64 promotion_check, U64 enpas_check, U64 encap_check, U64 enemy_mask); /* Forward decleration */
 
 void generate_pawn_moves(move_list_t *move_list, Bitboard *board) {
     /* Generates all pawn moves from a position, and adds them to move list */
@@ -22,7 +22,6 @@ void generate_pawn_moves(move_list_t *move_list, Bitboard *board) {
     U64 pawns = (side) ? board->pieces[pawn_w] : board->pieces[pawn_b]; /* Get the pawn bitboard for the respective side */
     U64 position = 0; /* Current pawn */
     U64 move_set = 0; /* Pawn moves for current pawn */
-    move_t move; /* Current move */
     int pawn_index; /* Index of pawn */
     // Check for next move.
     U64 double_push; /* Double pawn push check */
@@ -55,16 +54,15 @@ void generate_pawn_moves(move_list_t *move_list, Bitboard *board) {
         // Check for promotion
         promotion_check = (side) ? move_set & ranks[56] : move_set & ranks[0]; /* Check if promotion is possible */
         // Add all the moves to the move list
-        add_pawn_moves(move_set, board, move_list, pawn_index, promotion_check, double_push, enpas_move); /* Add all the pawn moves to the move list */
+        add_pawn_moves(move_set, board, move_list, pawn_index, promotion_check, double_push, enpas_move, enemy_mask); /* Add all the pawn moves to the move list */
         // Reset LSB
         pawns ^= position; /* Reset the LSB (remove the pawn from the pawns list */
     }
 }
 
-void add_pawn_moves(U64 move_set, Bitboard *board, move_list_t *move_list, int pawn_index, U64 promotion_check, U64 enpas_check, U64 encap_check) {
+void add_pawn_moves(U64 move_set, Bitboard *board, move_list_t *move_list, int pawn_index, U64 promotion_check, U64 enpas_check, U64 encap_check, U64 enemy_mask) {
     /* Add pawn moves to the move list from a move bitboard */
     int side = board->side; /* Makes code writing easier */
-    U64 enemy_mask = colour_mask(board, !side); /* Get the oppoenent mask */
     // Declare for loop
     U64 position;
     U64 cap_flag; /* Check if move is a capture */

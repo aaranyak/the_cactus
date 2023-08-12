@@ -5,7 +5,7 @@ CFLAGS =
 LDFLAGS = -lm
 
 # Sources
-MOVE_GEN_SOURCES = pawn_moves.c # Move generation code
+MOVE_GEN_SOURCES = pawn_moves.c knight_moves.c king_moves.c# Move generation code
 
 SOURCES = main.c bitboard_utils.c move_utils.c move_gen_utils.c $(MOVE_GEN_SOURCES) # All source files
 
