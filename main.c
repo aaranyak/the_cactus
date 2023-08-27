@@ -6,16 +6,22 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "bitboards.h"
 #include "bitboard_utils.h"
 #include "moves.h"
 #include "move_utils.h"
 #include "pawn_moves.h"
 #include "king_moves.h"
+#include "knight_moves.h"
+#include "rook_moves.h"
+#include "bishop_moves.h"
+#include "queen_moves.h"
+#include "castling_moves.h"
 #include "move_gen_utils.h"
 #include "lookup_tables.h"
-
-Bitboard *board;
+#include "init_magics.h"
+#include "make_move.h"
 int main(int argc, char **argv) {
     /* Run chess engine */
 
@@ -32,30 +38,28 @@ int main(int argc, char **argv) {
     }; /* An Array of characters as the starting board state */
 
     char test_position[64] = {
-        'r','n','b','q',' ','b','n','r',
-        'p','p','p','p','p',' ','p','p',
+        'r',' ',' ',' ','k',' ',' ','r',
+        ' ','p','p','p',' ','p','p',' ',
         ' ',' ',' ',' ',' ',' ',' ',' ',
         ' ',' ',' ',' ',' ',' ',' ',' ',
-        ' ',' ',' ',' ',' ','p',' ',' ',
-        ' ',' ',' ',' ','k',' ',' ',' ',
-        'P','P','P','P','P','P','P','P',
-        'R','N','B','Q','K','B','N','R',
+        ' ',' ',' ',' ',' ',' ',' ',' ',
+        ' ',' ',' ',' ',' ',' ',' ',' ',
+        ' ','P','P','P',' ','P','P',' ',
+        'R',' ',' ',' ','K',' ',' ','R',
     }; /* Starting position to test board states on */
     
     // Init board
-    board = (Bitboard*)malloc(sizeof(Bitboard)); /* Allocate space for bitboard */
-    init_board(board, test_position, 0); /* Initialize board */
+    Bitboard board; /* Allocate space for bitboard */
+    
+    init_board(&board, test_position, 1); /* Initialize board */
     printf("The Cactus - a chess playing AI that is supposed to defeat humans.\n\n"); /* Opening Message */
-    render_board(board); /* Display board */
-
-    // Test king move generation
-    move_list_t king_moves = {0,0}; /* Initialize an empty move list */
-    printf("King Moves:\n");
-    generate_king_moves(&king_moves, board); /* Generate king moves */
-    for (int i = 0; i < king_moves.count; i++) { /* Loop through all the moves */
-        printf("    %d) ", i + 1);
-        print_move(king_moves.moves[i]); /* Print move */
-    }
-    printf("\n");
+    // Test magic generation
+    init_magic_tables(); 
+    U64 enpas_file, castling_rights, key; /* Just testing */
+    move_t move = MM_CAS | MM_CSD; /* Castling for white kingside */
+    render_board(&board); /* Previous state */
+    make_move(&board, move, &enpas_file, &castling_rights, &key);
+    render_board(&board); /* Display board */
+    printf("Castling rights - 0x%lx\n",board.castling_rights);
     return 0;
 }

@@ -12,7 +12,7 @@ typedef unsigned int move_t; /* a move is basically an unsigned int, with parts 
  * Second byte - Square to
  * Next four bits - Piece to move
  * Next four bits - Captured piece (if any)
- * Last eight bits - Bit Flags // Figure this out later
+ * Last eight bits - Bit Flags 
 */
 
 // Bitmasks for the move
