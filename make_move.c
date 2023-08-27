@@ -88,3 +88,59 @@ void make_move(Bitboard *board, move_t move, U64 *enpas_file, U64 *castling_righ
     // Change side-to-move
     board->side = !board->side; /* Toggle this */
 }
+
+
+void unmake_move(Bitboard *board, move_t move, U64 *enpas_file, U64 *castling_rights, U64 *key) {
+    /* Unmakes the move on the board */
+    // Reset saved values
+    board->enpas = *enpas_file;
+    board->castling_rights = *castling_rights;
+    board->key = *key;
+    
+    // Since the xor operation is it's own inverse, we can just repeat the same steps we used for the make move function.
+
+    // Change the side-to-move
+    board->side = !board->side; /* Toggle side-to-move */
+    int side = board->side; /* Why not */
+
+    // Handle castling moves
+    if (move & MM_CAS) { /* If this is a castling move */
+        /* Handle Castling */
+        if (side) { /* If white is castling */
+            board->pieces[king_w] ^= (move & MM_CSD) ? CAS_KING_WQ : CAS_KING_WK; /* Move the king */
+            board->pieces[rook_w] ^= (move & MM_CSD) ? CAS_ROOK_WQ : CAS_ROOK_WK; /* Move the rook */
+        } else { /* If black is castling */
+            board->pieces[king_b] ^= (move & MM_CSD) ? CAS_KING_BQ : CAS_KING_BK; /* Move the king */
+            board->pieces[rook_b] ^= (move & MM_CSD) ? CAS_ROOK_BQ : CAS_ROOK_BK; /* Move the rook */
+        }
+        board->castling_rights &= ~(side ? W_CASTLE : B_CASTLE); /* Update castling rights */
+        return;
+    }
+
+    // Get move data
+    int from = move & MM_FROM; /* Get the from square */
+    int to = (move & MM_TO) >> MS_TO; /* Get the to square */
+    int piece = (move & MM_PIECE) >> MS_PIECE; /* Piece type id */
+    int cap_piece = (move & MM_EAT) >> MS_EAT; /* Captured piece id */
+    
+    // Do the actual moving
+    // Pawn promotion Move
+    if (move & MM_PRO) { /* If this is a pawn promotion move */
+        int promoted = (move & MM_PPP) >> MS_PPP; /* Pawn promoted to piece type */
+        board->pieces[piece] ^= 1ULL << from; /* Remove piece */
+        board->pieces[board->side ? promoted : promoted + 6] ^= 1ULL << to; /* Appear as promoted piece */
+        if (move & MM_CAP) /* If this is a capture move */ board->pieces[cap_piece] ^= 1ULL << to; /* Remove captured piece from board */
+    }
+    // En-passant capture
+    else if (move & MM_EPC) { /* If this is an en-passant capture move */
+        board->pieces[piece] ^= (1ULL << from) | (1ULL << to); /* Move the piece to the correct square */
+        U64 ep_cap_pos = ranks[side ? 32 : 24] /* Capture rank */ & board->enpas; /* Capture file */
+        board->pieces[(side) ? pawn_b : pawn_w] ^= ep_cap_pos; /* Remove the en-passant capture piece */
+    }
+    // Normal Move
+    else { /* Finally, a normal move... */
+        board->pieces[piece] ^= (1ULL << from) | (1ULL << to); /* Move the piece to the correct square */
+        if (move & MM_CAP) /* If this is a capture move */ board->pieces[cap_piece] ^= 1ULL << to; /* Remove captured piece from board */
+    }
+    return;
+}

@@ -38,28 +38,31 @@ int main(int argc, char **argv) {
     }; /* An Array of characters as the starting board state */
 
     char test_position[64] = {
-        'r',' ',' ',' ','k',' ',' ','r',
-        ' ','p','p','p',' ','p','p',' ',
         ' ',' ',' ',' ',' ',' ',' ',' ',
         ' ',' ',' ',' ',' ',' ',' ',' ',
         ' ',' ',' ',' ',' ',' ',' ',' ',
         ' ',' ',' ',' ',' ',' ',' ',' ',
-        ' ','P','P','P',' ','P','P',' ',
-        'R',' ',' ',' ','K',' ',' ','R',
+        'p','P',' ',' ',' ',' ',' ',' ',
+        ' ',' ',' ',' ',' ',' ',' ',' ',
+        ' ',' ','P','P','P','P','P','P',
+        'R','N','B','Q','K','B','N','R',
     }; /* Starting position to test board states on */
     
     // Init board
     Bitboard board; /* Allocate space for bitboard */
     
-    init_board(&board, test_position, 1); /* Initialize board */
+    init_board(&board, test_position, 0); /* Initialize board */
     printf("The Cactus - a chess playing AI that is supposed to defeat humans.\n\n"); /* Opening Message */
     // Test magic generation
-    init_magic_tables(); 
+    init_magic_tables();
+    board.enpas = files[1];
     U64 enpas_file, castling_rights, key; /* Just testing */
-    move_t move = MM_CAS | MM_CSD; /* Castling for white kingside */
+    move_t move = set_move(24, 17, pawn_b, 0); /* Test Move Making */
+    move |= MM_EPC; /* En-passant capture move */
     render_board(&board); /* Previous state */
     make_move(&board, move, &enpas_file, &castling_rights, &key);
     render_board(&board); /* Display board */
-    printf("Castling rights - 0x%lx\n",board.castling_rights);
+    unmake_move(&board, move, &enpas_file, &castling_rights, &key);
+    render_board(&board); /* Display board */
     return 0;
 }
