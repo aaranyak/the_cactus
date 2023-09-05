@@ -62,4 +62,58 @@ void render_board(Bitboard *board) {
     printf("%sSide to move - %s\n\n", board_print, board->side ? "White" : "Black"); /* print board */
 }
 
-
+void parse_fen(Bitboard *board, char *fen) {
+    /* Parses a FEN string and gives a board */
+    char init_state[64] = {
+        ' ',' ',' ',' ',' ',' ',' ',' ',
+        ' ',' ',' ',' ',' ',' ',' ',' ',
+        ' ',' ',' ',' ',' ',' ',' ',' ',
+        ' ',' ',' ',' ',' ',' ',' ',' ',
+        ' ',' ',' ',' ',' ',' ',' ',' ',
+        ' ',' ',' ',' ',' ',' ',' ',' ',
+        ' ',' ',' ',' ',' ',' ',' ',' ',
+        ' ',' ',' ',' ',' ',' ',' ',' ',
+    };
+    int index = 0;
+    int fen_index = 0;
+    char current_letter;
+    while (1) { /* Until broken */
+        current_letter = fen[fen_index];
+        if (current_letter == ' ') break;
+        else if (current_letter == '/');
+        else if (current_letter >= '0' && current_letter <= '8') {
+            index += (current_letter - '0');
+        }
+        else {
+            init_state[index] = current_letter;
+            index++;
+        }
+        fen_index++;
+    }
+    fen_index++;
+    char side_indicator = fen[fen_index];
+    int side_to_move = side_indicator == 'w';
+    fen_index += 2;
+    init_board(board, init_state, side_to_move);
+    board->castling_rights = 0;
+    while (1) {
+        current_letter = fen[fen_index];
+        if (current_letter == ' ' || current_letter == '-') break;
+        else {
+            switch (current_letter) {
+                case 'K':
+                    board->castling_rights |= WK_CASTLE;
+                    break;
+                case 'Q':
+                    board->castling_rights |= WQ_CASTLE;
+                    break;
+                case 'k':
+                    board->castling_rights |= BK_CASTLE;
+                    break;
+                case 'q':
+                    board->castling_rights |= BQ_CASTLE;
+            }
+            fen_index++;
+        }
+    }
+}

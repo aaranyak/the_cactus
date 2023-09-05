@@ -44,6 +44,7 @@ void make_move(Bitboard *board, move_t move, U64 *enpas_file, U64 *castling_righ
             board->pieces[rook_b] ^= (move & MM_CSD) ? CAS_ROOK_BQ : CAS_ROOK_BK; /* Move the rook */
         }
         board->castling_rights &= ~(side ? W_CASTLE : B_CASTLE); /* Update castling rights */
+        board->enpas = 0; /* Disable en-passant capture */
         board->side = !board->side; /* Toggle side-to-move */
         return;
     }
@@ -113,7 +114,6 @@ void unmake_move(Bitboard *board, move_t move, U64 *enpas_file, U64 *castling_ri
             board->pieces[king_b] ^= (move & MM_CSD) ? CAS_KING_BQ : CAS_KING_BK; /* Move the king */
             board->pieces[rook_b] ^= (move & MM_CSD) ? CAS_ROOK_BQ : CAS_ROOK_BK; /* Move the rook */
         }
-        board->castling_rights &= ~(side ? W_CASTLE : B_CASTLE); /* Update castling rights */
         return;
     }
 

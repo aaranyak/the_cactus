@@ -38,8 +38,8 @@ void get_position_name(int position, char name[3]) { /* Get the name of the boar
     /* Get the position name eg. e3 */
     char rn[8] = "12345678";
     char fn[8] = "abcdefgh";
-    name[0] = rn[position / 8];
-    name[1] = fn[position % 8];
+    name[1] = rn[position / 8];
+    name[0] = fn[position % 8];
     name[2] = 0;
 }
 

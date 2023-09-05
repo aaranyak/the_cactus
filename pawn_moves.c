@@ -100,8 +100,9 @@ void add_pawn_moves(U64 move_set, Bitboard *board, move_list_t *move_list, int p
             add_move_to_list(move_list, knight_pro); /* Add */
             add_move_to_list(move_list, bishop_pro); /* Add */
             add_move_to_list(move_list, queen_pro); /* Add */
+        } else { /* Make promotion compulsary */
+            add_move_to_list(move_list, move); /* Add move to move list */
         }
-        add_move_to_list(move_list, move); /* Add move to move list */
         move_set ^= position; /* Reset LSB (remove bit from list */
     }
 }
