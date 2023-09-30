@@ -9,4 +9,5 @@ move_t set_move(
         );
 void add_move_to_list(move_list_t *list, move_t move);
 void print_move(move_t move);
+void move_name(move_t move, char *enter);
 #endif

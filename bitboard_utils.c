@@ -2,20 +2,27 @@
  * Contains functions to 
  *  -> Initialize bitboard state from a char[]
  *  -> Render a bitboard stat on command line
+ *  -> Parse FEN string.
 */
 #include <stdio.h>
 #include <stdlib.h>
 #include "bitboards.h"
+#include "legality_test.h"
+#include "lookup_tables.h"
+#include "zobrist_hash.h"
+
 void clear_board(Bitboard *board) {
     /* Empties all the random data in a bitboard befor initiaizing it */
     for (int i; i < 12; i++) { /* Loop through all piece bitboards */
         board->pieces[i] = 0; /* Empty them */
+        board->attack_tables[i] = 0; /* Empty their attack tables as well */
     }
     // Empty everything else
     board->castling_rights = 0;
     board->enpas = 0;
     board->side = 0;
     board->key = 0;
+    board->moves = 0;
 }
 
 void init_board(Bitboard *board, char init_state[64], int side_to_move) {
@@ -29,14 +36,28 @@ void init_board(Bitboard *board, char init_state[64], int side_to_move) {
             position = (U64)1 << ((7 - y) * 8) + x; /* Get actual position of the bit in the bitboard */
             piece_type = init_state[(y * 8) + x]; /* Get the piece type character */
             for (int p = 0; p < 12; p++) { /* loop through piece types */
-                if (letters[p] == piece_type) board->pieces[p] |= position; /* Add piece to bb */
+                if (letters[p] == piece_type) {
+                    board->pieces[p] |= position; /* Add piece to bb */
+                    board->piece_square_eval += piece_square[p][((7 - y) * 8) + x];
+                    // Update hash key
+                    board->key ^= pst_hash[p][((7 - y) * 8) + x]; /* Xor the piece on square to the zobrist hash */
+                }
             }
         }
     }
-
     // Set everything else
     board->castling_rights = W_CASTLE | B_CASTLE; /* Enable castling on both sides */
     board->side = side_to_move != 0;
+    for (int piece = 0; piece < 12; piece++) { /* Loop through all piece types */
+        update_attack_table(board, piece);
+    }
+    // Add the castling rights to the key
+    board->key ^= cr_hash[0];
+    board->key ^= cr_hash[1];
+    board->key ^= cr_hash[2];
+    board->key ^= cr_hash[4];
+
+    if (side_to_move == 0) board->key != side_hash;
 }
 
 void render_board(Bitboard *board) {
@@ -59,7 +80,7 @@ void render_board(Bitboard *board) {
         }
         sprintf(board_print, "%s\n   +---+---+---+---+---+---+---+---+\n", board_print); /* Next line */
     }
-    printf("%sSide to move - %s\n\n", board_print, board->side ? "White" : "Black"); /* print board */
+    printf("%sSide to move - %s\nPiece Square Eval - %d\nMoves - %d\nKey - 0x%016lx\n\n", board_print, board->side ? "White" : "Black", board->piece_square_eval, board->moves, board->key); /* print board */
 }
 
 void parse_fen(Bitboard *board, char *fen) {

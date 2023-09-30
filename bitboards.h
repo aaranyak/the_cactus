@@ -10,8 +10,12 @@ typedef struct Bitboard {
     // Other board details
     U64 castling_rights; /* 1st 4 bits are relevant */
     U64 enpas; /* Figure this out later (probably a file mask) */
+    U64 attack_tables[12]; /* Attack tables of all the pieces on the board */
     int side; /* Side to move */
+    
+    int piece_square_eval; /* Evaluation term for piece-square-tables */
     U64 key; /* Zobrist hash for bitboard */
+    int moves;
 } Bitboard;
 
 // Other important details
@@ -31,5 +35,6 @@ enum { /* Piece ids */
 
 // Bitwise operation hardware instructions.
 #define bitscan(x) __builtin_ctzll(x) /* Bitscan Forward */
-
+#define popcount(x) __builtin_popcountll(x) /* Population count of bitset */
+#define cutoff(x) (((x) > 0) ? (x) : 0)
 #endif

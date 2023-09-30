@@ -98,17 +98,75 @@ U64 queen_attack_mask(Bitboard *board, int side, U64 own, U64 enemy) {
     return attacks; /* Don't forget to add this line, or else all your effort will go to waste */
 }
 
+void update_attack_table(Bitboard *board, int piece) {
+    /* Update the attack table of a certian piece */
+    int side = piece < 6; /* Side */
+    U64 own = colour_mask(board, side); /* Own colour mask */
+    U64 enemy = colour_mask(board, !side); /* Enemy colour mask */
+    switch (piece) { /* Depending on the piece, update attack mask */
+        case rook_w:
+            board->attack_tables[piece] = rook_attack_mask(board, side, own, enemy);
+            break;
+        case knight_w:
+            board->attack_tables[piece] = knight_attack_mask(board, side);
+            break;
+        case bishop_w:
+            board->attack_tables[piece] = bishop_attack_mask(board, side, own, enemy);
+            break;
+        case queen_w:
+            board->attack_tables[piece] = queen_attack_mask(board, side, own, enemy);
+            break;
+        case king_w:
+            board->attack_tables[piece] = king_attack_mask(board, side);
+            break;
+        case pawn_w:
+            board->attack_tables[piece] = pawn_attack_mask(board, side);
+            break;
+        // Black pieces
+        case rook_b:
+            board->attack_tables[piece] = rook_attack_mask(board, side, own, enemy);
+            break;
+        case knight_b:
+            board->attack_tables[piece] = knight_attack_mask(board, side);
+            break;
+        case bishop_b:
+            board->attack_tables[piece] = bishop_attack_mask(board, side, own, enemy);
+            break;
+        case queen_b:
+            board->attack_tables[piece] = queen_attack_mask(board, side, own, enemy);
+            break;
+        case king_b:
+            board->attack_tables[piece] = king_attack_mask(board, side);
+            break;
+        case pawn_b:
+            board->attack_tables[piece] = pawn_attack_mask(board, side);
+            break;
+    }
+}
+
+void update_sliding_piece_attacks(Bitboard *board) {
+    /* Update all sliding piece attack tables (this is because anything can affect them */
+    // White pieces
+    update_attack_table(board, rook_w);
+    update_attack_table(board, bishop_w);
+    update_attack_table(board, queen_w);
+    // Black pieces
+    update_attack_table(board, rook_b);
+    update_attack_table(board, bishop_b);
+    update_attack_table(board, queen_b);
+}
+
 int is_check(Bitboard *board, int side) {
     /* Detects if the king of any colour is under check */
     U64 own = colour_mask(board, side); /* Own colour mask */
     U64 enemy = colour_mask(board, !side); /* Enemy colour mask */
     U64 attacks = 0
-        | pawn_attack_mask(board, !side) /* Add the pawn attacks */
-        | knight_attack_mask(board, !side) /* Knight attacks */
-        | king_attack_mask(board, !side) /* Ok, it seems obvious where we are going */
-        | rook_attack_mask(board, !side, enemy, own)
-        | bishop_attack_mask(board, !side, enemy, own)
-        | queen_attack_mask(board, !side, enemy, own); /* Ok now we have got all the attacked squares by the enemy */
+        | board->attack_tables[side ? pawn_b : pawn_w] /* Add the pawn attacks */
+        | board->attack_tables[side ? knight_b : knight_w] /* Knight attacks */
+        | board->attack_tables[side ? king_b : king_w] /* Ok, it seems obvious where we are going */
+        | board->attack_tables[side ? rook_b : rook_w]
+        | board->attack_tables[side ? bishop_b : bishop_w]
+        | board->attack_tables[side ? queen_b : queen_w]; /* Ok now we have got all the attacked squares by the enemy */
     // Check if the king intersects with the attacks
     if (board->pieces[side ? king_w : king_b] & attacks) return 1; /* Check! */
     else return 0; /* Not check */
@@ -121,12 +179,12 @@ int castling_legality(Bitboard *board, move_t move) {
     U64 enemy = colour_mask(board, !side); /* Enemy colour mask */
     int legality = 1;
     U64 attacks = 0
-        | pawn_attack_mask(board, !side) /* Add the pawn attacks */
-        | knight_attack_mask(board, !side) /* Knight attacks */
-        | king_attack_mask(board, !side) /* Ok, it seems obvious where we are going */
-        | rook_attack_mask(board, !side, enemy, own)
-        | bishop_attack_mask(board, !side, enemy, own)
-        | queen_attack_mask(board, !side, enemy, own); /* Ok now we have got all the attacked squares by the enemy */
+        | board->attack_tables[side ? pawn_b : pawn_w] /* Add the pawn attacks */
+        | board->attack_tables[side ? knight_b : knight_w] /* Knight attacks */
+        | board->attack_tables[side ? king_b : king_w] /* Ok, it seems obvious where we are going */
+        | board->attack_tables[side ? rook_b : rook_w]
+        | board->attack_tables[side ? bishop_b : bishop_w]
+        | board->attack_tables[side ? queen_b : queen_w]; /* Ok now we have got all the attacked squares by the enemy */
     if (is_check(board, board->side)) legality = 0; /* Castling while checked is not allowed */
     U64 king_jumpover; /* The square that the king jumps over */
     if (board->side) { /* White castles */
@@ -142,11 +200,11 @@ int castling_legality(Bitboard *board, move_t move) {
 
 int is_legal(Bitboard *board, move_t move) {
     /* Return true if the move is legal, otherwise return false */
-    U64 enpas, castling_rights, key; /* For unmaking move */
+    U64 enpas, castling_rights, key; int ps_eval; /* For unmaking move */
     int legality;
-    make_move(board, move, &enpas, &castling_rights, &key); /* We Make the Move !! */
+    make_move(board, move, &enpas, &castling_rights, &key, &ps_eval); /* We Make the Move !! */
     legality = !is_check(board, !(board->side)); /* Check if the king is now under check (What if the king isn't even there? Don't think that's possible) */
-    unmake_move(board, move, &enpas, &castling_rights, &key); /* We take back the move */
+    unmake_move(board, move, &enpas, &castling_rights, &key, &ps_eval); /* We take back the move */
     if (move & MM_CAS) /* If this is a castling move */ legality = legality && castling_legality(board, move); /* Do special legality test */
     return legality;
 }
