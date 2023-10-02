@@ -23,6 +23,15 @@ result_t quiescence(Bitboard *board, int alpha, int beta) {
     move_t move; /* Use this in loops */
     move_list_t pseudo_legal = {0,0}; /* Create a move list for pseudo-legal moves */
     move_list_t legal_moves = {0,0}; /* This list will only contain legal moves */
+
+    // Evaluate Standing-Pat
+    int evaluation = evaluate(board); /* Return evaluation */
+
+    if (evaluation >= beta) /* alpha-beta pruning */
+        return (result_t){beta, 0}; /* Prune this branch */
+    if (evaluation > alpha) /* That Standing-PAT thing */
+        alpha = evaluation; /* Set the alpha to the current evaluation */
+
     // Generate legal moves
     generate_moves(board, &pseudo_legal); /* Generate pseudo legal moves */
     for (index = 0; index < pseudo_legal.count; index++) { /* Loop through the pseudo-legal moves to filter out illegal ones */
@@ -33,7 +42,6 @@ result_t quiescence(Bitboard *board, int alpha, int beta) {
     }
 
     if (legal_moves.count == 0) { /* There are no captures left */
-        int evaluation = evaluate(board); /* Return the static evaluation */
         return (result_t){evaluation, 0}; /* Just return an evaluation */
     }
     

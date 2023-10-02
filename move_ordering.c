@@ -55,7 +55,7 @@ void order_moves(move_list_t *move_list, Bitboard *board, int use_hash_move, mov
         // Check if this is the hash move
         if (use_hash_move) { /* If we have to use the tp table */
             if (move == hash_move) { /* If this is the same as the hash move */
-                score = 999999999; /* Hash Move - Best Move! ;-) */
+                score = INF; /* Hash Move - Best Move! ;-) */
                 move_scores[index] = score; /* Set the move score */
                 continue; /* Where were we... */
             }

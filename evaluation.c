@@ -14,7 +14,7 @@
 #include "legality_test.h"
 #include "generate_moves.h"
 
-#define OPENING_END 30
+#define OPENING_END 10
 
 int count_material(Bitboard *board, int side) {
     /* Counts the material on the board */
@@ -42,7 +42,7 @@ int evaluate(Bitboard *board) {
     // Add piece square evaluation
     pst_eval = board->piece_square_eval;
     if (!board->side) pst_eval = (pst_eval * opening_weight(board)) / -OPENING_END; /* Flip the piece_square eval if black is playing */
-    
+    else pst_eval = (pst_eval * opening_weight(board)) / OPENING_END;
     evaluation = pst_eval + material;
 
     return evaluation;

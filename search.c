@@ -100,7 +100,7 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
             if (-result.evaluation >= beta) { /* Evaluation better than last best */
                 /* Prune this branch, since the opponent will not consider this position */
                 node_type = node_cut; /* Set it to a cut node, since this branch will be pruned */
-                add_entry(board->key, alpha, depth, board->moves, max_move, node_type); /* Add the entry to the transposition table */
+                add_entry(board->key, beta, depth, board->moves, move, node_type); /* Add the entry to the transposition table */
                 return (result_t){beta, move}; /* Need not search further */
             }
 

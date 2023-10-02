@@ -15,7 +15,6 @@ typedef struct iterative_result {
 } id_result_t;
 
 result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_search, int max_time);
-
 id_result_t iterative_deepening(Bitboard *board, int search_time);
 #endif
 
