@@ -14,7 +14,7 @@
 #include "legality_test.h"
 #include "generate_moves.h"
 
-#define OPENING_END 10
+#define OPENING_END 25
 
 int count_material(Bitboard *board, int side) {
     /* Counts the material on the board */

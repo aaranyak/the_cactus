@@ -47,7 +47,7 @@ void play_game(Bitboard *board, int side) {
                 if (strcmp(move_title, this_name) == 0) {
                     U64 a, b, c;
                     int d;
-                    system("clear");
+                    system("cls");
                     printf("The Cactus - a chess AI that is supposed to defeat humans in chess \n\n");
                     make_move(board, moves.moves[i], &a, &b, &c, &d);
                     render_board(board);
@@ -60,7 +60,7 @@ void play_game(Bitboard *board, int side) {
             U64 a, b, c;
             int d;
             move_t move = result.move;
-            system("clear");
+            system("cls");
             printf("The Cactus - a chess AI that is supposed to defeat humans in chess \n\n");
             make_move(board, move, &a, &b, &c, &d);
             render_board(board);
@@ -76,14 +76,14 @@ int main(int argc, char **argv) {
 
     // The board state to start with
     char initial_state[64] = {
+        'r','n','b','q','k','b','n','r',
+        'p','p','p','p','p','p','p','p',
         ' ',' ',' ',' ',' ',' ',' ',' ',
         ' ',' ',' ',' ',' ',' ',' ',' ',
-        ' ',' ','K','Q',' ',' ',' ',' ',
         ' ',' ',' ',' ',' ',' ',' ',' ',
-        ' ',' ','p',' ',' ',' ',' ',' ',
-        ' ',' ',' ',' ','n',' ',' ',' ',
         ' ',' ',' ',' ',' ',' ',' ',' ',
-        ' ',' ','q','n','r','k',' ',' ',
+        'P','P','P','P','P','P','P','P',
+        'R','N','B','Q','K','B','N','R',
     }; /* An Array of characters as the starting board state */
     
     // Initialize pre-initialized data */
@@ -92,12 +92,10 @@ int main(int argc, char **argv) {
     init_magic_tables();
     // Initialize the board */
     Bitboard board = {0,0,0,0}; /* Allocate space for bitboard */
-    init_board(&board, initial_state, 0);
+    init_board(&board, initial_state, 1);
     // Render board and print opening message 
     printf("The Cactus - a chess AI that is supposed to defeat humans in chess \n\n");
     render_board(&board); /* Display the board on the screen */
-    board.moves = 131;
-    board.castling_rights = 0;
     // Test search by playing test game
     play_game(&board, 1);
 
