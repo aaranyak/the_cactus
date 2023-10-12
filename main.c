@@ -25,52 +25,9 @@
 #include "queen_moves.h"
 #include "zobrist_hash.h"
 #include "tp_table.h"
+#include "gui_game.h"
 #define INF INT_MAX
 
-void play_game(Bitboard *board, int side) {
-    while (1) {
-        if (board->side == side) {
-            /* Human move */
-            move_list_t random = {0,0};
-            generate_moves(board, &random);
-            for (int i = 0; i < random.count; i++){
-                print_move(random.moves[i]);
-            }
-            char move_title[300];
-            printf("Enter move: ");
-            fgets(move_title, 300, stdin);
-            move_list_t moves = {0,0};
-            generate_moves(board, &moves);
-            for (int i = 0; i < moves.count; i++) {
-                char this_name[300] = {0};
-                move_name(moves.moves[i], this_name);
-                if (strcmp(move_title, this_name) == 0) {
-                    U64 a, b, c;
-                    int d;
-                    system("cls");
-                    printf("The Cactus - a chess AI that is supposed to defeat humans in chess \n\n");
-                    make_move(board, moves.moves[i], &a, &b, &c, &d);
-                    render_board(board);
-                    break;
-                }
-            }
-        } else {
-            hash_move_used = 0;
-            id_result_t result = iterative_deepening(board, 10); /* Search for 10 seconds */
-            U64 a, b, c;
-            int d;
-            move_t move = result.move;
-            system("cls");
-            printf("The Cactus - a chess AI that is supposed to defeat humans in chess \n\n");
-            make_move(board, move, &a, &b, &c, &d);
-            render_board(board);
-            printf("Move: "); print_move(move);
-            printf("Evaluation: %d\n", -result.evaluation);
-            printf("Depth: %d\n", result.depth);
-            printf("\n\n");
-        }
-    }
-}
 int main(int argc, char **argv) {
     /* Run chess engine */
 
@@ -83,9 +40,8 @@ int main(int argc, char **argv) {
         ' ',' ',' ',' ',' ',' ',' ',' ',
         ' ',' ',' ',' ',' ',' ',' ',' ',
         'P','P','P','P','P','P','P','P',
-        'R','N','B','Q','K','B','N','R',
+        'R','N','B','Q','K','B','N','R',    
     }; /* An Array of characters as the starting board state */
-    
     // Initialize pre-initialized data */
     init_tp_table();
     init_hash_keys();
@@ -93,13 +49,8 @@ int main(int argc, char **argv) {
     // Initialize the board */
     Bitboard board = {0,0,0,0}; /* Allocate space for bitboard */
     init_board(&board, initial_state, 1);
-    // Render board and print opening message 
-    printf("The Cactus - a chess AI that is supposed to defeat humans in chess \n\n");
-    render_board(&board); /* Display the board on the screen */
-    // Test search by playing test game
-    play_game(&board, 1);
-
-    
-    
-    return 0;
+    // Start a game with the GUI
+    int human_side = 1; /* The side of the human to play */
+    if (argc - 1) if (strcmp(argv[1], "black\n")) human_side = 0;/* if arguement black, human side is 0 */
+    return launch_gui(&board, argc, argv, human_side, 10);
 }

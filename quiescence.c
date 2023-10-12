@@ -11,10 +11,13 @@
 #include "make_move.h"
 #include "legality_test.h"
 #include "generate_moves.h"
+#include "lookup_tables.h"
 #include "evaluation.h"
 #include "search.h" /* result_t typedef */
 #include "move_ordering.h"
+
 #define INF INT_MAX
+#define DELTA 200 /* Used for delta pruning */
 
 result_t quiescence(Bitboard *board, int alpha, int beta) {
     /* Evaluates moves only with no captures */
@@ -55,6 +58,13 @@ result_t quiescence(Bitboard *board, int alpha, int beta) {
     U64 castling, enpas, key; int ps_eval; /* Used for make/unmake */
     for (index = 0; index < legal_moves.count; index++) { /* Loop through all the legal moves */
         move = legal_moves.moves[index]; /* Current move */
+        
+        // Delta pruning
+        int cap_piece = (move & MM_EAT) >> MS_EAT;
+        if ((evaluation + materials[cap_piece] + DELTA) < alpha) /* If the evaluation + the captured piece material + some margin cannot raise the alpha, prune this branch */
+            continue;
+
+
         make_move(board, move, &enpas, &castling, &key, &ps_eval); /* Make the move on the board */
         result = quiescence(board, -beta, -alpha); /* Recursively call itself to search at an even higher depth */
         unmake_move(board, move, &enpas, &castling, &key, &ps_eval); /* Unmake the move on the board */
