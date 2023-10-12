@@ -1,3 +1,6 @@
 .vscode/*
 **/*.swp
 cactus
+cactus_gui
+cactus.exe
+debugger
