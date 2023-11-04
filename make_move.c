@@ -55,19 +55,8 @@ void make_move(Bitboard *board, move_t move, U64 *enpas_file, U64 *castling_righ
         
         // Update piece-square tables
         U64 cas_side = move & MM_CSD;
-        if (side) { /* If white is castling */
-            board->piece_square_eval -= piece_square[king_w][4]; /* Remove the king from it's place */
-            board->piece_square_eval -= piece_square[rook_w][cas_side ? 0 : 7]; /* Remove the rook from it's place */
-            // Put the stuff in it's place
-            board->piece_square_eval += piece_square[king_w][cas_side ? 2 : 6]; /* Put the king in it's place */
-            board->piece_square_eval += piece_square[rook_w][cas_side ? 3 : 5]; /* Put the rook in it's place */
-        } else { /* If black is castling */
-            board->piece_square_eval -= piece_square[king_w][60]; /* Remove the king from it's place */
-            board->piece_square_eval -= piece_square[rook_w][cas_side ? 56 : 63]; /* Remove the rook from it's place */
-            // Put the stuff in it's place
-            board->piece_square_eval += piece_square[king_w][cas_side ? 58 : 62]; /* Put the king in it's place */
-            board->piece_square_eval += piece_square[rook_w][cas_side ? 59 : 61]; /* Put the rook in it's place */
-        }
+        if (side) board->piece_square_eval += cas_side ? 15 : 35; /* Add the castling advantage to the pst*/
+        else board->piece_square_eval -= cas_side ? 15 : 35; /* Add the castling advantage to the pst*/
         update_key_castle(board, side, cas_side); /* Update the zobrist hash key while castling */
         board->castling_rights &= ~(side ? W_CASTLE : B_CASTLE); /* Update castling rights */
         board->side = !board->side; /* Toggle side-to-move */

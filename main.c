@@ -67,7 +67,8 @@ int main(int argc, char **argv) {
     // Initialize the board */
     Bitboard board = {0,0,0,0}; /* Allocate space for bitboard */
     init_board(&board, initial_state, 1);
-    // Start a game with the GUI
+
+    // Start a game with the GUI 
     int human_side = 1; /* The side of the human to play */
     if (argc - 1) if (strcmp(argv[1], "black\n")) human_side = 0;/* if arguement black, human side is 0 */
     return launch_gui(&board, argc, argv, human_side, 10);

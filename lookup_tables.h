@@ -69,4 +69,8 @@ static const int materials[12] = {500, 300, 300, 900, 0, 100, 500, 300, 300, 900
 
 static const int piece_square[12][64] = {pst_rook_w, pst_knight_w, pst_bishop_w, pst_queen_w, pst_king_w, pst_pawn_w, pst_rook_b, pst_knight_b, pst_bishop_b, pst_queen_b, pst_king_b, pst_pawn_b}; /* Piece square tables */
 
+
+// Distance Tables
+static const int center_manhattan_distance[64] = {6, 5, 4, 3, 3, 4, 5, 6, 5, 4, 3, 2, 2, 3, 4, 5, 4, 3, 2, 1, 1, 2, 3, 4, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 4, 3, 2, 1, 1, 2, 3, 4, 5, 4, 3, 2, 2, 3, 4, 5, 6, 5, 4, 3, 3, 4, 5, 6};
+
 #endif
