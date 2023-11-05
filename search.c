@@ -36,10 +36,6 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
     if ((int)time(NULL) >= max_time) /* If the search time has been exceeded */
         *interrupt_search = 1; /* Stop searching */
 
-    if (*interrupt_search) { /* If the search has been interrupted */
-        return (result_t){0,0};
-    }
-    
     // Search for entry in tp_table
     entry_t entry = get_entry(board->key); /* Try getting the entry from the tp-table */
     if (!invalid_entry(entry) && entry.depth >= depth && entry.node_type == node_pv) { /* If the entry is there, and the depth of the entry is greater than or equal to the current depth, and this is a pv node */
@@ -95,6 +91,9 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
             make_move(board, move, &enpas, &castling, &key, &ps_eval); /* Make the move on the board */
             result = search(board, depth - 1, -beta, -alpha, interrupt_search, max_time); /* Recursively call itself to search at an even higher depth */
             unmake_move(board, move, &enpas, &castling, &key, &ps_eval); /* Unmake the move on the board */
+            
+            if (*interrupt_search) /* If the search has been interrupted */
+                return (result_t){0,0}; /* Get out */
             
             // Alpha-beta pruning
             if (-result.evaluation >= beta) { /* Evaluation better than last best */
