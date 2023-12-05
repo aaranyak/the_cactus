@@ -489,7 +489,7 @@ void update_metadata_log(GameState *state) { /* Log Game Metadata */
     time_t current_time = time(NULL); /* Get time to calculate date*/
     strftime(date_string, 20, "%d-%m-%Y", localtime(&current_time));
     // Write metadata
-    fprintf(log, "Date, %s,,,,,\nCactus Plays, %s,,,,,\nHuman Plays, %s,,,,,\nNo., Key, Move, Move Desc., Depth, Evaluation\n",
+    fprintf(log, "Date, %s,,,,,\nCactus Plays, %s,,,,,\nHuman Plays, %s,,,,,\nNo., Side, Key, Move, Move Desc., Depth, Evaluation\n",
             date_string, state->human_side ? "Black" : "White", state->human_side ? "White" : "Black"
         );
     fclose(log); /* Close Log File */
