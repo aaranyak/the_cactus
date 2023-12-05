@@ -280,7 +280,7 @@ void update_move_log(GameState *state, int count, int side, U64 key, move_t move
     FILE *log = fopen(state->log_filename, "a+"); /* Open file in append mode */
     char move_as_str[300] = {0}; /* Put move here */
     move_name(move, move_as_str); /* Get Move Name */
-    fprintf(log, "%d, %s, %016lx, %08x, %s, %d, %d\n", count, side ? "White" : "Black", key, move, move_as_str, depth, evaluation); /* Print move metadata */
+    fprintf(log, "%d, %s, %016lx, %08x, \"%s\", %d, %d\n", count, side ? "White" : "Black", key, move, move_as_str, depth, evaluation); /* Print move metadata */
     fclose(log); /* Close File */
 
 }
