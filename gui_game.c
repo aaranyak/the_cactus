@@ -29,6 +29,10 @@
 #include "gui_game.h"
 #define INF INT_MAX
 
+#ifndef M_PI
+#define M_PI (3.14159265358979323846264338327950288)
+#endif
+
 char *piece_icons[12] = {"♜", "♞", "♝", "♛", "♚", "♟", "♜", "♞", "♝", "♛", "♚", "♟"}; /* Chess piece icons */
 
 move_list_t generate_legal_moves(Bitboard *board) {
@@ -271,10 +275,21 @@ void mouse_down_callback(GtkWidget *drawing_area, GdkEventButton *event, GameSta
     }
 }
 
+void update_move_log(GameState *state, int count, int side, U64 key, move_t move, int depth, int evaluation) { /* Log a move in the log file */
+    /* Updates the move on the log file */
+    FILE *log = fopen(state->log_filename, "a+"); /* Open file in append mode */
+    char move_as_str[300] = {0}; /* Put move here */
+    move_name(move, move_as_str); /* Get Move Name */
+    fprintf(log, "%d, %s, %016lx, %08x, %s, %d, %d\n", count, side ? "White" : "Black", key, move, move_as_str, depth, evaluation); /* Print move metadata */
+    fclose(log); /* Close File */
+
+}
+
 void play_move_on_board(GameState *state, move_t move, int eval, int depth) {
     /* Play a move on the board, and update status */
     if (!state->game_over) {
         U64 a, b, c; int d; /* Saved data stuff for move */
+        if (state->log_filename) update_move_log(state, state->board->moves + 1, state->side, state->board->key, move, depth, eval); /* Log the move */
         make_move(state->board, move, &a, &b, &c, &d); /* Make the move on the board */
         update_game_state(state, eval, move, depth, 1); /* Update the game state with the last move */
         // Check for checkmate
@@ -468,7 +483,20 @@ void create_game_window(GtkApplication **app, GtkWidget **game_window, GtkWidget
     gtk_widget_show_all(*game_window); /* Show the window */
 }
 
-void start_game(GtkApplication **app, Bitboard *board, int human_side, int think_time) {
+void update_metadata_log(GameState *state) { /* Log Game Metadata */
+    FILE *log = fopen(state->log_filename, "w"); /* Open Logfile */
+    char date_string[20]; /* Date */
+    time_t current_time = time(NULL); /* Get time to calculate date*/
+    strftime(date_string, 20, "%d-%m-%Y", localtime(&current_time));
+    // Write metadata
+    fprintf(log, "Date, %s,,,,,\nCactus Plays, %s,,,,,\nHuman Plays, %s,,,,,\nNo., Key, Move, Move Desc., Depth, Evaluation\n",
+            date_string, state->human_side ? "Black" : "White", state->human_side ? "White" : "Black"
+        );
+    fclose(log); /* Close Log File */
+
+}
+
+void start_game(GtkApplication **app, Bitboard *board, int human_side, int think_time, char *log_filename) {
     /* Starts the game with the GUI */
     // Declare everything
     GameState *state = (GameState*)malloc(sizeof(GameState));
@@ -481,6 +509,8 @@ void start_game(GtkApplication **app, Bitboard *board, int human_side, int think
     state->human_side = human_side; /* Set the human side */
     state->perspective = human_side; /* For now, let the perspective be the same as the human side */
     state->game_over = 0; /* Game not yet over */
+    state->log_filename = log_filename; /* Set Logging Filename */
+    if (state->log_filename) update_metadata_log(state); /* Write beginning metadata */
     update_game_state(state, 0, 0, 0, 0); /* Update everything else in the game state */
     
     create_game_window(app, &game_window, &board_canvas, state); /* Create the game window */
@@ -492,21 +522,22 @@ struct launch_action_data {
     Bitboard *board;
     int human_side;
     int search_time;
+    char *log_filename;
 };
 
 void launch_action(GtkApplication *app, struct launch_action_data *data) {
     /* What to do when the game is launched */
-    start_game(&app, data->board, data->human_side, data->search_time); /* Start game */
+    start_game(&app, data->board, data->human_side, data->search_time, data->log_filename); /* Start game */
 }
 
 
 
-int launch_gui(Bitboard *board, int argc, char **argv, int human_side, int search_time) {
+int launch_gui(Bitboard *board, int argc, char **argv, int human_side, int search_time, char *log_filename) {
     /* Launches the GUI for the game */
     GtkApplication *app; /* This is the app object that will be used for creating windows */
     app = gtk_application_new("io.github.aaranyak.the_cactus", G_APPLICATION_FLAGS_NONE); /* Create new GTK Application with id "io.github.aaranyak.the_cactus" */
     struct launch_action_data *signal_data = (struct launch_action_data*)malloc(sizeof(struct launch_action_data)); /* Allocate data memory */
-    signal_data->board = board; signal_data->search_time = search_time; signal_data->human_side = human_side; /* Set data values */
+    signal_data->board = board; signal_data->search_time = search_time; signal_data->human_side = human_side; signal_data->log_filename = log_filename; /* Set data values */
     g_signal_connect_data(app, "activate", G_CALLBACK (launch_action), signal_data, (GClosureNotify)free, 0); /* Set app start callback to the start function */
     int status = g_application_run(G_APPLICATION (app), 0, 0); /* Run app */
     g_object_unref(app); /* Free memory when app is closed */

@@ -35,7 +35,11 @@ typedef struct GameState {
     int is_hovering; /* For drag and drop, if piece is hovering */
     int hover_pos_x; /* Hover position x */
     int hover_pos_y; /* Hover position y */
+
+    // Logging
+    char *log_filename; /* Log File Pointer */
+
 } GameState;
-int launch_gui(Bitboard *board, int argc, char **argv, int human_side, int search_time);
+int launch_gui(Bitboard *board, int argc, char **argv, int human_side, int search_time, char *log_filename);
 #define min(x, y) (((x) < (y)) ? (x) : (y))
 #endif
