@@ -1,33 +1,32 @@
 /* Header file for gui_game.c */
-
 #ifndef GUIGAME_H
 #define GUIGAME_H
-#include <gtk/gtk.h>
+#include "bitboards.h"
+#include "moves.h"
+int launch_gui(HINSTANCE app_id, int show_cl, Bitboard *board, int human_side, int search_time);
+
 typedef struct GameState {
-    // Basics
-    Bitboard *board; /* The current board state */
-    int human_side; /* The side that the human is playing */
-    int side; /* So as not to confuse with the board->side */
-    int game_over; /* Until game is not over */
+    /* Stores the state of the game */
+    Bitboard *board; /* The current state of the board */
+    int perspective; /* The perspective of the human */
+    int human_side; /* The side the human is playing */
+    int search_time; /* Time given for searching */
+    int side; /* So as to differenciate from board->side */
+    int mailbox[64]; /* This will be a much easier and efficient lookup scheme */
+
+    // Game details
+    move_t last_move;
+    int game_over; /* Obviously */
     int draw; /* If it is a draw */
     int white_wins; /* If white wins */
-    int think_time; /* AI Think Time */ 
-    // Widgets to update
-    GtkWidget *drawing_area; /* Drawingarea to update */
-    GtkWidget *eval_text; /* Evaluation Text */
-    GtkWidget *move_text; /* Last Move Text */
-    GtkWidget *depth_text; /* Depth Searched text */
-    GtkWidget *side_text; /* Side To Move text */
-
-    // Visuals and data
-    int evaluation; /* AI move evaluation */
-    int depth; /* Depth searched */
-    move_t last_move; /* Last move played */  
-    int mailbox[64]; /* A mailbox notation of the board for easy rendering */
-    int perspective; /* Which side to view the board from */
     move_list_t legal_moves; /* List of legal moves (I think this is important */
 
-    // Selected piece
+    // GUI Properties
+    HINSTANCE app_id;
+    int height;
+    int width;
+
+    // Selection Details
     int is_selected; /* If a piece has been selected */
     int selected_piece; /* Selected piece */
     int selected_position; /* On square */
@@ -35,7 +34,7 @@ typedef struct GameState {
     int is_hovering; /* For drag and drop, if piece is hovering */
     int hover_pos_x; /* Hover position x */
     int hover_pos_y; /* Hover position y */
+
 } GameState;
-int launch_gui(Bitboard *board, int argc, char **argv, int human_side, int search_time);
-#define min(x, y) (((x) < (y)) ? (x) : (y))
+
 #endif

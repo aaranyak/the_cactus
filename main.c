@@ -24,9 +24,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <windows.h>
 #include <time.h>
 #include <string.h>
 #include <limits.h>
+#include "gui_game.h"
 #include "bitboards.h"
 #include "bitboard_utils.h"
 #include "moves.h"
@@ -43,11 +45,10 @@
 #include "queen_moves.h"
 #include "zobrist_hash.h"
 #include "tp_table.h"
-#include "gui_game.h"
 #define INF INT_MAX
 
-int main(int argc, char **argv) {
-    /* Run chess engine */
+int WINAPI WinMain(HINSTANCE app_id, HINSTANCE previous_id, LPSTR command_line, int show_cl) { /* The main function in using the Windows API is structured slightly differently  */
+    /* Run the chess engine */
 
     // The board state to start with
     char initial_state[64] = {
@@ -67,8 +68,13 @@ int main(int argc, char **argv) {
     // Initialize the board */
     Bitboard board = {0,0,0,0}; /* Allocate space for bitboard */
     init_board(&board, initial_state, 1);
-    // Start a game with the GUI
-    int human_side = 1; /* The side of the human to play */
-    if (argc - 1) if (strcmp(argv[1], "black\n")) human_side = 0;/* if arguement black, human side is 0 */
-    return launch_gui(&board, argc, argv, human_side, 10);
+    int human_side = 0;
+    int message_id = MessageBox(
+            NULL,
+            "Would you like to play as black or whiite\nClick YES for white, and NO for black.",
+            "Black or white",
+            MB_ICONQUESTION | MB_YESNO
+        );
+    if (message_id == IDYES) human_side = 1;
+    return launch_gui(app_id, show_cl, &board, human_side, 10); /* Launch GUI */
 }
