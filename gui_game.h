@@ -18,7 +18,7 @@ typedef struct GameState {
     GtkWidget *move_text; /* Last Move Text */
     GtkWidget *depth_text; /* Depth Searched text */
     GtkWidget *side_text; /* Side To Move text */
-
+    GtkWidget *think_text; /* Shows that the engine is thinking */
     // Visuals and data
     int evaluation; /* AI move evaluation */
     int depth; /* Depth searched */

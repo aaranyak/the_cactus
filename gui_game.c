@@ -312,8 +312,10 @@ void *engine_think(void *state_pointer) {
     /* Function to make AI start thinking */
     id_result_t result; /* Search result */
     GameState *state = (GameState*)state_pointer; /* Cast the state pointer into a gamestate */
+    gtk_label_set_markup(GTK_LABEL(state->think_text), g_markup_printf_escaped("<span size=\"large\">%s</span> style=\"italic\"", "The Cactus is Thinking"));
     result = iterative_deepening(state->board, state->think_time);
     play_move_on_board(state, result.move, result.evaluation, result.depth); /* Play the move on the board, and update values */
+    gtk_label_set_markup(GTK_LABEL(state->think_text), g_markup_printf_escaped("<span size=\"large\" style=\"italic\">%s</span>", ""));
     gtk_widget_queue_draw(state->drawing_area); /* Update drawing area */
 
 }
@@ -413,11 +415,14 @@ void create_game_window(GtkApplication **app, GtkWidget **game_window, GtkWidget
     GtkWidget *eval_text; /* Evaluation Text */
     GtkWidget *move_text; /* Last Move Text */
     GtkWidget *side_text; /* Side To Move Text */
+    GtkWidget *think_text; /* Shows that engine is thinking */
+
     // Text Boxes
     GtkWidget *depth_box; /* Depth Searched Box */
     GtkWidget *eval_box; /* etc. */
     GtkWidget *move_box;
     GtkWidget *side_box;
+    GtkWidget *think_box;
 
     // Create Widgets
     *game_window = gtk_application_window_new(*app); /* Create a new gtk window */
@@ -433,18 +438,21 @@ void create_game_window(GtkApplication **app, GtkWidget **game_window, GtkWidget
     eval_text = gtk_label_new("Evaluation - 0"); /* Create a new label */
     move_text = gtk_label_new("Last Move - N/A"); /* Create a new label */
     side_text = gtk_label_new(state->side ? "Side To Move - White" : "Side to Move - Black"); /* Create a new label */
+    think_text = gtk_label_new(""); /* Create a new label */
     
     // Set these in the state */
     state->depth_text = depth_text; 
     state->eval_text = eval_text; 
     state->move_text = move_text; 
     state->side_text = side_text; 
+    state->think_text = think_text; 
     // Text Boxes
     
     depth_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0); /* To style and size the text */
     eval_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0); /* To style and size the text */
     move_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0); /* To style and size the text */
     side_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0); /* To style and size the text */
+    think_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0); /* To style and size the text */
     
     // Format Widgets
     gtk_window_set_title(GTK_WINDOW (*game_window), "The Cactus - a chess AI that is supposed to defeat humans in chess."); /* Set the window title */
@@ -453,6 +461,7 @@ void create_game_window(GtkApplication **app, GtkWidget **game_window, GtkWidget
     gtk_widget_set_size_request(move_text, 200, -1); /* Set position to wrap */ 
     gtk_widget_set_size_request(side_container, 600, -1); /* Set width of side box */
     gtk_box_set_homogeneous(GTK_BOX(container), 0); /* Non-homogenous */
+    gtk_label_set_use_markup(GTK_LABEL(think_text), TRUE); /* Set use markup to true (to help make font bigger) */
     // Connect Signals
     gtk_widget_add_events(*board_canvas, GDK_POINTER_MOTION_MASK | GDK_BUTTON_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK); /* Add the mouse move event to the board */
     g_signal_connect(*board_canvas, "draw", G_CALLBACK(draw_board), state); /* Draw the board */ 
@@ -465,6 +474,7 @@ void create_game_window(GtkApplication **app, GtkWidget **game_window, GtkWidget
 
     // Pack Text boxes.
     gtk_box_pack_start(GTK_BOX(side_box), side_text, 1, 1, 20); /* Add the text to text box */
+    gtk_box_pack_start(GTK_BOX(think_box), think_text, 1, 1, 20); /* Add the text to text box */
     gtk_box_pack_start(GTK_BOX(depth_box), depth_text, 1, 1, 20); /* Add the text to text box */
     gtk_box_pack_start(GTK_BOX(eval_box), eval_text, 1, 1, 20); /* Add the text to text box */
     gtk_box_pack_start(GTK_BOX(move_box), move_text, 1, 1, 20); /* Add the text to text box */
@@ -474,6 +484,7 @@ void create_game_window(GtkApplication **app, GtkWidget **game_window, GtkWidget
     gtk_box_pack_start(GTK_BOX(side_container), depth_box, 0, 0, 20); /* Add text box */
     gtk_box_pack_start(GTK_BOX(side_container), eval_box, 0, 0, 20); /* Add text box */
     gtk_box_pack_start(GTK_BOX(side_container), move_box, 0, 0, 20); /* Add text box */
+    gtk_box_pack_start(GTK_BOX(side_container), think_box, 0, 0, 20); /* Add text box */
 
     gtk_container_add(GTK_CONTAINER(*game_window), container); /* Add the row */
     gtk_box_pack_start(GTK_BOX(container), *board_canvas, 1, 1, 0); /* Add the board canvas */
