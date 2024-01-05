@@ -312,7 +312,7 @@ void *engine_think(void *state_pointer) {
     /* Function to make AI start thinking */
     id_result_t result; /* Search result */
     GameState *state = (GameState*)state_pointer; /* Cast the state pointer into a gamestate */
-    gtk_label_set_markup(GTK_LABEL(state->think_text), g_markup_printf_escaped("<span size=\"large\">%s</span> style=\"italic\"", "The Cactus is Thinking"));
+    gtk_label_set_markup(GTK_LABEL(state->think_text), g_markup_printf_escaped("<span size=\"large\" style=\"italic\">%s</span>", "The Cactus is Thinking"));
     result = iterative_deepening(state->board, state->think_time);
     play_move_on_board(state, result.move, result.evaluation, result.depth); /* Play the move on the board, and update values */
     gtk_label_set_markup(GTK_LABEL(state->think_text), g_markup_printf_escaped("<span size=\"large\" style=\"italic\">%s</span>", ""));
