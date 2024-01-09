@@ -26,7 +26,7 @@
 
 #define INF INT_MAX
 
-result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_search, int max_time) {
+result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_search, int max_time, move_t force_move) {
     /* Generate moves, recursively generate moves from resulting positions until
      * maximum depth is reached, and then evaluate the position, use minmax
      * algorithm to find best evaluation and move.
@@ -72,9 +72,12 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
             }
         }
         
-
+        
         // Order the moves
-        if (invalid_entry(entry)) { /* If there is no hash move */
+        if (force_move) { /* If a forced move is given */
+            /* Order moves with the forced move at first */
+            order_moves(&legal_moves, board, 1, force_move); /* Order Moves */
+        } else if (invalid_entry(entry)) { /* If there is no hash move */
             /* Use the normal move ordering technique */
             order_moves(&legal_moves, board, 0, 0); /* Order moves to increase number of cutoffs during search */
         } else { /* If there is a hash move available */
@@ -89,17 +92,19 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
         for (index = 0; index < legal_moves.count; index++) { /* Loop through all the legal moves */
             move = legal_moves.moves[index]; /* Current move */
             make_move(board, move, &enpas, &castling, &key, &ps_eval); /* Make the move on the board */
-            result = search(board, depth - 1, -beta, -alpha, interrupt_search, max_time); /* Recursively call itself to search at an even higher depth */
+            result = search(board, depth - 1, -beta, -alpha, interrupt_search, max_time, 0); /* Recursively call itself to search at an even higher depth */
             unmake_move(board, move, &enpas, &castling, &key, &ps_eval); /* Unmake the move on the board */
-            
-            if (*interrupt_search) /* If the search has been interrupted */
-                return (result_t){0,0}; /* Get out */
             
             // Alpha-beta pruning
             if (-result.evaluation >= beta) { /* Evaluation better than last best */
                 /* Prune this branch, since the opponent will not consider this position */
                 node_type = node_cut; /* Set it to a cut node, since this branch will be pruned */
                 add_entry(board->key, beta, depth, board->moves, move, node_type); /* Add the entry to the transposition table */
+                
+                // Check for search interrupt
+                if (*interrupt_search) /* If the search has been interrupted */
+                    return (result_t){beta,move}; /* Get out */
+                
                 return (result_t){beta, move}; /* Need not search further */
             }
 
@@ -108,6 +113,10 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
                 alpha = -result.evaluation; /* Update best eval */
                 max_move = move; /* Update best move */
             }
+            
+            // Check for search interrupt
+            if (*interrupt_search) /* If the search has been interrupted */
+                return (result_t){alpha,max_move}; /* Get out */
         }
         
 
@@ -131,12 +140,13 @@ id_result_t iterative_deepening(Bitboard *board, int search_time) {
 
     while (!interrupt_search) { /* Until the search has not been interrupted */
         // Set the previous result
+        // Do the search
+        depth++; /* Increase the depth */
+        current_result = search(board, depth, -INF, INF, &interrupt_search,(depth >= 4) ? max_time : INF, (depth > 1) ? result.move : 0); /* Search at the current depth */
+        
         result.evaluation = current_result.evaluation;
         result.move = current_result.move;
         result.depth = depth;
-        // Do the search
-        depth++; /* Increase the depth */
-        current_result = search(board, depth, -INF, INF, &interrupt_search,(depth >= 4) ? max_time : INF); /* Search at the current depth */
     }
 
     return result;
