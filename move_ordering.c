@@ -1,5 +1,4 @@
-/* move_ordering.c
- * Orders moves using multiple heuristic methods.
+/* Orders the moves using move ordering scheme
  * Sorts them using selection sort
 */
 #include <stdio.h>
@@ -18,13 +17,17 @@
 #include "evaluation.h"
 #include "search.h" /* result_t typedef */
 #include "quiescence.h"
+#include "killer_moves.h"
+
 #define INF INT_MAX
 
 // Weights for each of the move ordering schemes (Deal with this later).
+#define KILLER_BIAS 50
+
 
 void sort_moves(move_list_t *move_list, int scores[]);
 
-void order_moves(move_list_t *move_list, Bitboard *board, int use_hash_move, move_t hash_move) {
+void order_moves(move_list_t *move_list, Bitboard *board, int use_hash_move, move_t hash_move, int depth) {
     /* Order moves to be searched using heuristic methods, so that more branches are likely to be pruned.
      * Ordering methods:
      *  -> Move score from hash table (Not yet implemented).
@@ -69,6 +72,12 @@ void order_moves(move_list_t *move_list, Bitboard *board, int use_hash_move, mov
         if (move & MM_PRO) { /* A promotion move! */
             promoted = (move & MM_PPP) >> MS_PPP; /* Get promoted piece type */
             score += materials[promoted]; /* Give the promoted piece a score */
+        }
+
+        if (depth) { /* Use killer moves */
+            if (is_killer(move, depth)) { /* If this is a killer move */
+                score += KILLER_BIAS;
+            }
         }
 
         if ((1ULL << to) & board->attack_tables[board->side ? pawn_b : pawn_w]) { /* If moving to a square that is attacked by an enemy pawn */

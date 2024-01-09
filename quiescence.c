@@ -48,7 +48,7 @@ result_t quiescence(Bitboard *board, int alpha, int beta) {
         return (result_t){evaluation, 0}; /* Just return an evaluation */
     }
     
-    order_moves(&legal_moves, board, 0, 0); /* Order moves to increase number of cutoffs during search */
+    order_moves(&legal_moves, board, 0, 0, 1); /* Order moves to increase number of cutoffs during search */
 
     // There are captures left, continue search
     result_t result; /* Current result */

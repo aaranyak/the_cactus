@@ -23,8 +23,10 @@
 #include "move_ordering.h"
 #include "zobrist_hash.h"
 #include "tp_table.h"
+#include "killer_moves.h"
 
 #define INF INT_MAX
+
 
 result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_search, int max_time, move_t force_move) {
     /* Generate moves, recursively generate moves from resulting positions until
@@ -76,12 +78,12 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
         // Order the moves
         if (force_move) { /* If a forced move is given */
             /* Order moves with the forced move at first */
-            order_moves(&legal_moves, board, 1, force_move); /* Order Moves */
+            order_moves(&legal_moves, board, 1, force_move, depth); /* Order Moves */
         } else if (invalid_entry(entry)) { /* If there is no hash move */
             /* Use the normal move ordering technique */
-            order_moves(&legal_moves, board, 0, 0); /* Order moves to increase number of cutoffs during search */
+            order_moves(&legal_moves, board, 0, 0, depth); /* Order moves to increase number of cutoffs during search */
         } else { /* If there is a hash move available */
-            order_moves(&legal_moves, board, 1, entry.best_move); /* Again, Hash move - Best move ! */
+            order_moves(&legal_moves, board, 1, entry.best_move, depth); /* Again, Hash move - Best move ! */
         }
 
         // This is not a checkmate, continue search
@@ -101,6 +103,12 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
                 node_type = node_cut; /* Set it to a cut node, since this branch will be pruned */
                 add_entry(board->key, beta, depth, board->moves, move, node_type); /* Add the entry to the transposition table */
                 
+                // Add killer move (if killer)
+                if (!(move & MM_PRO || move & MM_CAP || move & MM_EPC)) { /* If this is not a capture or promotion move */
+                    // Add it to the killer moves list
+                    add_killer(move, depth); /* Add the move to the killer moves list */
+                }
+
                 // Check for search interrupt
                 if (*interrupt_search) /* If the search has been interrupted */
                     return (result_t){beta,move}; /* Get out */
@@ -142,6 +150,7 @@ id_result_t iterative_deepening(Bitboard *board, int search_time) {
         // Set the previous result
         // Do the search
         depth++; /* Increase the depth */
+        clear_killers(); /* Clear killer moves */
         current_result = search(board, depth, -INF, INF, &interrupt_search,(depth >= 4) ? max_time : INF, (depth > 1) ? result.move : 0); /* Search at the current depth */
         
         result.evaluation = current_result.evaluation;
