@@ -89,13 +89,17 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
         // This is not a checkmate, continue search
         node_t node_type = node_all; /* At first assume all-node */
         result_t result; /* Current result */
-        move_t max_move = legal_moves.moves[0]; /* The move with the highest evaluation */
+        move_t max_move = (force_move) ? 0 : legal_moves.moves[0]; /* The move with the highest evaluation */
         U64 castling, enpas, key; int ps_eval; /* Used for make/unmake */
         for (index = 0; index < legal_moves.count; index++) { /* Loop through all the legal moves */
             move = legal_moves.moves[index]; /* Current move */
             make_move(board, move, &enpas, &castling, &key, &ps_eval); /* Make the move on the board */
             result = search(board, depth - 1, -beta, -alpha, interrupt_search, max_time, 0); /* Recursively call itself to search at an even higher depth */
             unmake_move(board, move, &enpas, &castling, &key, &ps_eval); /* Unmake the move on the board */
+            
+            // Check for search interrupt
+            if (*interrupt_search) /* If the search has been interrupted */
+                return (result_t){alpha,max_move}; /* Get out */
             
             // Alpha-beta pruning
             if (-result.evaluation >= beta) { /* Evaluation better than last best */
@@ -109,10 +113,6 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
                     add_killer(move, depth); /* Add the move to the killer moves list */
                 }
 
-                // Check for search interrupt
-                if (*interrupt_search) /* If the search has been interrupted */
-                    return (result_t){beta,move}; /* Get out */
-                
                 return (result_t){beta, move}; /* Need not search further */
             }
 
@@ -121,13 +121,8 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
                 alpha = -result.evaluation; /* Update best eval */
                 max_move = move; /* Update best move */
             }
-            
-            // Check for search interrupt
-            if (*interrupt_search) /* If the search has been interrupted */
-                return (result_t){alpha,max_move}; /* Get out */
         }
         
-
         // Update result in TP Table
         add_entry(board->key, alpha, depth, board->moves, max_move, node_type); /* Add the entry to the transposition table */
 
@@ -152,7 +147,8 @@ id_result_t iterative_deepening(Bitboard *board, int search_time) {
         depth++; /* Increase the depth */
         clear_killers(); /* Clear killer moves */
         current_result = search(board, depth, -INF, INF, &interrupt_search,(depth >= 4) ? max_time : INF, (depth > 1) ? result.move : 0); /* Search at the current depth */
-        
+        if (current_result.move == 0) break; /* If the search is interrupted before anything happens, get out. */
+
         result.evaluation = current_result.evaluation;
         result.move = current_result.move;
         result.depth = depth;

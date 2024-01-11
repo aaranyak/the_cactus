@@ -29,6 +29,7 @@ move_t killers[MAX_DEPTH][2] = {0}; /* Contains killer moves */
 
 int is_killer(move_t move, int depth) {
     /* Check if move is a killer move */
+    if (depth >= MAX_DEPTH) return 0;
     if (move == killers[depth][0]) return 1;
     if (move == killers[depth][1]) return 1;
     return 0;
@@ -36,6 +37,7 @@ int is_killer(move_t move, int depth) {
 
 void add_killer(move_t move, int depth) {
     /* Adds a killer move to the killers list */
+    if (depth >= MAX_DEPTH) return; /* Cannot be greater than max depth */
     if (!is_killer(move, depth)) {
         killers[depth][1] = killers[depth][0]; /* Shift last killer */
         killers[depth][0] = move; /* Add the killer move */
