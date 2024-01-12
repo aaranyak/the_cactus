@@ -22,11 +22,6 @@ int main() {
     Bitboard board = {0,0,0,0};
     U64 pawn_attacks;
     U64 position;
-    printf("{");
-    for (int i = 0; i < 64; i++) {
-        /* loop through all the squares */
-        printf("%d, ", pst[i%8 + ((7 - i/8)*8)]);
-    }
-    printf("}\n");
+    printf("Popcount - %d\n", popcount(0xffffffff9001e6ff));
     return 0;
 }

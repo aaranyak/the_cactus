@@ -41,5 +41,4 @@ typedef struct GameState {
 
 } GameState;
 int launch_gui(Bitboard *board, int argc, char **argv, int human_side, int search_time, char *log_filename);
-#define min(x, y) (((x) < (y)) ? (x) : (y))
 #endif

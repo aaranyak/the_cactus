@@ -27,6 +27,7 @@
 #include "zobrist_hash.h"
 #include "tp_table.h"
 #include "gui_game.h"
+#include "move_gen_utils.h"
 #define INF INT_MAX
 
 #ifndef M_PI

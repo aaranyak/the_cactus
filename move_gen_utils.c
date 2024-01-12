@@ -8,6 +8,14 @@
 #include "moves.h"
 #include "move_utils.h"
 #include "lookup_tables.h"
+#include "generate_moves.h"
+#include "pawn_moves.h"
+#include "king_moves.h"
+#include "knight_moves.h"
+#include "rook_moves.h"
+#include "bishop_moves.h"
+#include "queen_moves.h"
+#include "castling_moves.h"
 
 U64 colour_mask(Bitboard *board, int side) {
     /* Returns a union of all the boards of a certian colour */
@@ -34,4 +42,22 @@ int get_captured_piece(Bitboard *board, U64 position, int side) {
         if (board->pieces[piece_id] & position) /* if the position has an opponent piece */ return piece_id; /* Break out of the loop and return the id */
     }
     return 12;
+}
+
+U64 square_attacked_by(Bitboard *board, int square, U64 occupied) {
+    /* Square attacked by:
+     * Calculates all attacking/defending pieces of specific squares.
+    */
+    U64 attacked_by = 0;
+    // Jumping Piece Attacks
+    attacked_by |= (pawn_attacks_b[square] & board->pieces[pawn_w]) /* White pawn attacks */ | (pawn_attacks_w[square] & board->pieces[pawn_b]) /* Black pawn attacks */;
+    attacked_by |= knight_attacks[square] & (board->pieces[knight_w] | board->pieces[knight_b]); /* Knight attacks */
+    attacked_by |= king_attacks[square] & (board->pieces[king_w] | board->pieces[king_b]); /* King attacks */
+    // Sliding piece attacks.
+	attacked_by |= magic_rook_moves(square, 0, occupied) & (board->pieces[rook_w] | board->pieces[rook_b]); /* Get rook attacks */
+	attacked_by |= magic_bishop_moves(square, 0, occupied) & (board->pieces[bishop_w] | board->pieces[bishop_b]); /* Get bishop attacks */
+	attacked_by |=  magic_queen_moves(square, 0, occupied) & (board->pieces[queen_w] | board->pieces[queen_b]); /* Get queen attacks */
+
+    attacked_by &= occupied; /* Remove captured pieces */
+    return attacked_by;
 }
