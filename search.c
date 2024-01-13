@@ -11,6 +11,7 @@
 #include <time.h>
 #include "bitboards.h"
 #include "bitboard_utils.h"
+#include "move_gen_utils.h"
 #include "moves.h"
 #include "move_utils.h"
 #include "init_magics.h"
@@ -28,7 +29,7 @@
 #define INF INT_MAX
 
 
-result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_search, int max_time, move_t force_move) {
+result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_search, int max_time, move_t force_move, int ply) {
     /* Generate moves, recursively generate moves from resulting positions until
      * maximum depth is reached, and then evaluate the position, use minmax
      * algorithm to find best evaluation and move.
@@ -74,27 +75,59 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
             }
         }
         
+        // Check if this is a draw
+        U64 piece_boards = colour_mask(board, 0) | colour_mask(board, 1); /* Get the total board */
+        if (popcount(piece_boards) < 3) /* If only two kings are left */
+            return (result_t){0, 0}; /* Return a draw (only two kings left) */
+        // Three fold repetition
+        if (get_repetitions(board) >= 3) /* Check if the position repeats more than 2 times */
+            return (result_t){0, 0}; /* Return a draw. */
+            
         
         // Order the moves
         if (force_move) { /* If a forced move is given */
             /* Order moves with the forced move at first */
-            order_moves(&legal_moves, board, 1, force_move, depth); /* Order Moves */
+            order_moves(&legal_moves, board, 1, force_move, ply); /* Order Moves */
         } else if (invalid_entry(entry)) { /* If there is no hash move */
             /* Use the normal move ordering technique */
-            order_moves(&legal_moves, board, 0, 0, depth); /* Order moves to increase number of cutoffs during search */
+            order_moves(&legal_moves, board, 0, 0, ply); /* Order moves to increase number of cutoffs during search */
         } else { /* If there is a hash move available */
-            order_moves(&legal_moves, board, 1, entry.best_move, depth); /* Again, Hash move - Best move ! */
+            order_moves(&legal_moves, board, 1, entry.best_move, ply); /* Again, Hash move - Best move ! */
         }
-
         // This is not a checkmate, continue search
         node_t node_type = node_all; /* At first assume all-node */
         result_t result; /* Current result */
         move_t max_move = (force_move) ? 0 : legal_moves.moves[0]; /* The move with the highest evaluation */
         U64 castling, enpas, key; int ps_eval; /* Used for make/unmake */
+        
+        // Extension/Reduction Data
+        int reduction;
+        int in_check = is_check(board, board->side); /* If in check, don't do LMR */
+        
         for (index = 0; index < legal_moves.count; index++) { /* Loop through all the legal moves */
             move = legal_moves.moves[index]; /* Current move */
             make_move(board, move, &enpas, &castling, &key, &ps_eval); /* Make the move on the board */
-            result = search(board, depth - 1, -beta, -alpha, interrupt_search, max_time, 0); /* Recursively call itself to search at an even higher depth */
+            
+            // Late Move Reductions
+            /* Late Move Reductions:
+             *  -> This is an optimisation, assuming that the move ordering scheme works
+             *  -> We search the later moves to a lower depth, therefore saving search time.
+             *  -> In the case that the move does increase alpha,
+             *  -> We do another search to the regular depth
+            */
+            // Calculate Reduction Amount.
+            reduction = 0; /* In the first 5 moves, don't reduce */
+            if (!((move & MM_CAP || move & MM_EPC || MM_PRO) || /* If not a tactical move */ in_check /* If in check, don't risk reductions */) && depth > 3 /* Don't risk LMR in low depths */) { /* If it's ok to use LMR */
+                if (index > 4) reduction = 1; /* After 5 moves, reduce by 1 */
+                if (index > 15) reduction = 2; /* For last few moves, reduce by two counts */
+            }
+
+            result = search(board, cutoff(depth - 1 - reduction), -beta, -alpha, interrupt_search, max_time, 0, ply + 1); /* Recursively call itself to search at an even higher depth */
+
+            if (result.evaluation > alpha && reduction) /* If a reduced move increases alpha */
+                /* Then do another search to the full depth */
+                result = search(board, depth - 1, -beta, -alpha, interrupt_search, max_time, 0, ply + 1); /* Recursively call itself to search at an even higher depth */
+
             unmake_move(board, move, &enpas, &castling, &key, &ps_eval); /* Unmake the move on the board */
             
             // Check for search interrupt
@@ -110,7 +143,8 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
                 // Add killer move (if killer)
                 if (!(move & MM_PRO || move & MM_CAP || move & MM_EPC)) { /* If this is not a capture or promotion move */
                     // Add it to the killer moves list
-                    add_killer(move, depth); /* Add the move to the killer moves list */
+                    add_killer(move, ply); /* Add the move to the killer moves list */
+                    set_history(move, depth); /* Add this to history heuristic */
                 }
 
                 return (result_t){beta, move}; /* Need not search further */
@@ -146,9 +180,9 @@ id_result_t iterative_deepening(Bitboard *board, int search_time) {
         // Do the search
         depth++; /* Increase the depth */
         clear_killers(); /* Clear killer moves */
-        current_result = search(board, depth, -INF, INF, &interrupt_search,(depth >= 4) ? max_time : INF, (depth > 1) ? result.move : 0); /* Search at the current depth */
+        clear_history(); /* Clear history heuristic */
+        current_result = search(board, depth, -INF, INF, &interrupt_search,(depth >= 4) ? max_time : INF, (depth > 1) ? result.move : 0, 1); /* Search at the current depth */
         if (current_result.move == 0) break; /* If the search is interrupted before anything happens, get out. */
-
         result.evaluation = current_result.evaluation;
         result.move = current_result.move;
         result.depth = depth;

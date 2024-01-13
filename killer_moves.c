@@ -26,6 +26,8 @@
 #define MAX_DEPTH 20
 
 move_t killers[MAX_DEPTH][2] = {0}; /* Contains killer moves */
+int history_heuristic[64][64] = {0}; /* Contains history heuristic */
+
 
 int is_killer(move_t move, int depth) {
     /* Check if move is a killer move */
@@ -50,4 +52,25 @@ void clear_killers() {
         killers[i][0] = 0;
         killers[i][1] = 0;
     }
+}
+
+// History Heuristic
+
+void clear_history() {
+    /* Clear the History Heuristic */
+    for (int x = 0; x < 64; x++) {
+        for (int y = 0; y < 64; y++) {
+            history_heuristic[x][y] = 0;
+        }
+    }
+}
+
+int get_history(move_t move) {
+    /* Get the history bias */
+    return history_heuristic[(move & MM_FROM) >> MS_FROM][(move & MM_TO) >> MS_TO]; /* Get the history heuristic */
+}
+
+void set_history(move_t move, int depth) {
+    /* Set the history heuristic */
+    history_heuristic[(move & MM_FROM) >> MS_FROM][(move & MM_TO) >> MS_TO] = depth*depth; /* Get the history heuristic */
 }

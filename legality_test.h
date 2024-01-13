@@ -3,6 +3,7 @@
 #define LEGALITYTEST_H
 #include "moves.h"
 #include "bitboards.h"
+int get_repetitions(Bitboard *board);
 U64 pawn_attack_mask(Bitboard *board, int side);
 U64 knight_attack_mask(Bitboard *board, int side);
 U64 king_attack_mask(Bitboard *board, int side);

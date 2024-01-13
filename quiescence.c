@@ -56,10 +56,6 @@ int see(Bitboard *board, move_t move) {
     U64 attacker = 1ULL << ((move & MM_FROM) >> MS_FROM); /* Get the from square */
     U64 occupied = colour_mask(board, 0) | colour_mask(board, 1); /* Get the occupied squares, to use as a temporary occupation map */
     U64 attacks = square_attacked_by(board, square, occupied); /* Get all the squares that attack this square */
-    if (popcount(attacks) > 32) {
-        render_board(board); /* Cursed */
-        exit(1);
-    }
     // Run the loop, simulating recursively going deeper.
     exchange[0] = materials[captured]; /* Calculate initial material exchange */
     do {
@@ -127,7 +123,7 @@ result_t quiescence(Bitboard *board, int alpha, int beta) {
             continue;
         
         // Static Exchange Evaluation Pruning
-        if (evaluation + see(board, move) < alpha) /* If the static exchange evaluation is less than 0 */
+        if (see(board, move) < 0) /* If the static exchange evaluation is less than 0 */
             continue; /* Just prune this branch */
 
         make_move(board, move, &enpas, &castling, &key, &ps_eval); /* Make the move on the board */

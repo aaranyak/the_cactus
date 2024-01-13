@@ -306,6 +306,18 @@ void play_move_on_board(GameState *state, move_t move, int eval, int depth) {
                 state->game_over = 1; /* Game Over (Stalemate */
             }
         }
+        // Detect a draw (only kings left).
+        U64 piece_boards = colour_mask(state->board, 0) | colour_mask(state->board, 1); /* Get the total board */
+        if (popcount(piece_boards) < 3) { /* If only two kings are left */
+            state->game_over = 1; /* Return a draw (only two kings left) */
+            state->draw = 1; /* Draw by kings left */
+        }
+
+        // Detect draw by repetitions
+        if (get_repetitions(state->board) >= 3) { /* If there are more than two repetitions */
+            state->game_over = 1; /* Return a draw (only two kings left) */
+            state->draw = 1; /* Draw by kings left */
+        }
     }
 }
 

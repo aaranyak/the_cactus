@@ -79,6 +79,9 @@ void order_moves(move_list_t *move_list, Bitboard *board, int use_hash_move, mov
                 score += KILLER_BIAS;
             }
         }
+        
+        if (depth) /* Use history heuristic */
+            score += get_history(move); /* Get the history heuristic */
 
         if ((1ULL << to) & board->attack_tables[board->side ? pawn_b : pawn_w]) { /* If moving to a square that is attacked by an enemy pawn */
             score -= materials[piece]; /* Subtract the material of the piece, since it will probably be captured on the next move */

@@ -13,10 +13,11 @@
 
 void clear_board(Bitboard *board) {
     /* Empties all the random data in a bitboard befor initiaizing it */
-    for (int i; i < 12; i++) { /* Loop through all piece bitboards */
+    for (int i = 0; i < 12; i++) { /* Loop through all piece bitboards */
         board->pieces[i] = 0; /* Empty them */
         board->attack_tables[i] = 0; /* Empty their attack tables as well */
     }
+    for (int i = 0; i < 65536; i++) board->repetition_table[i] = 0; /* Clear repetition table */
     // Empty everything else
     board->castling_rights = 0;
     board->enpas = 0;
@@ -56,8 +57,8 @@ void init_board(Bitboard *board, char init_state[64], int side_to_move) {
     board->key ^= cr_hash[1];
     board->key ^= cr_hash[2];
     board->key ^= cr_hash[4];
-
     if (side_to_move == 0) board->key != side_hash;
+    board->repetition_table[0] = board->key;
 }
 
 void render_board(Bitboard *board) {

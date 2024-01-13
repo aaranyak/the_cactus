@@ -16,6 +16,8 @@ typedef struct Bitboard {
     int piece_square_eval; /* Evaluation term for piece-square-tables */
     U64 key; /* Zobrist hash for bitboard */
     int moves;
+
+    U64 repetition_table[65536];
 } Bitboard;
 
 // Other important details

@@ -155,6 +155,9 @@ void make_move(Bitboard *board, move_t move, U64 *enpas_file, U64 *castling_righ
     board->side = !board->side; /* Toggle this */
     board->key ^= side_hash; /* Toggle side-to-move on zobrist key */
     board->moves++; /* Plus plus the move count */
+
+    // Update repetition Table.
+    board->repetition_table[board->moves] = board->key; /* Update repetition Table */
 }
 
 
@@ -222,5 +225,8 @@ void unmake_move(Bitboard *board, move_t move, U64 *enpas_file, U64 *castling_ri
     if (move & MM_PRO) update_attack_table(board, side ? promoted : promoted + 6); /* If this is a pawn promotion, update the promoted piece attack table */
     update_sliding_piece_attacks(board); /* Update the sliding piece attack table, since that can be affected by moving blockers */
    
+    // Update repetition Table
+    board->repetition_table[board->moves + 1] = board->key; /* Update repetition Table */
+    
     return;
 }

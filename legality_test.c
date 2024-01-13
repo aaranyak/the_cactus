@@ -15,6 +15,18 @@
 #include "lookup_tables.h"
 #include "make_move.h"
 
+int get_repetitions(Bitboard *board) {
+    /* Count how many times this position has been repeated */
+    int repetitions = 0;
+    int limit = cutoff(board->moves - 50);
+    for (int index = board->moves; index >= limit; index--) {
+        /* Loop through the last 25 moves */
+        if (board->repetition_table[index] == board->key) repetitions++; /* Add a repetition */
+        /* Yes, I am putting a comment before the line of code */ index--; /* Decrement again */
+    }
+    return repetitions;
+}
+
 U64 pawn_attack_mask(Bitboard *board, int side) {
     /* Generate all attacked squares of pawns, to check if king is attacked */
     U64 attack_mask = 0; /* retval (you know what I mean) */
