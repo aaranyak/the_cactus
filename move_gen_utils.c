@@ -36,6 +36,25 @@ U64 colour_mask(Bitboard *board, int side) {
     }
 }
 
+U64 attack_mask(Bitboard *board, int side) {
+    /* Returns a union of all the boards of a certian colour */
+    if (side) { /* If the colour is white */
+        return board->attack_tables[0] /* From 0 */
+             | board->attack_tables[1]
+             | board->attack_tables[2]
+             | board->attack_tables[3]
+             | board->attack_tables[4]
+             | board->attack_tables[5]; /* To 5 (All white attack_tables) */
+    } else { /* For black attack_tables */
+        return board->attack_tables[6] /* From 6 */
+             | board->attack_tables[7]
+             | board->attack_tables[8]
+             | board->attack_tables[9]
+             | board->attack_tables[10]
+             | board->attack_tables[11]; /* To 11 (All black attack_tables) */
+    }
+}
+
 int get_captured_piece(Bitboard *board, U64 position, int side) {
     /* Gets the id of a captured piece */
     for (int piece_id = (side) ? 6 : 0; piece_id < (side) ? 12 : 6; piece_id++) { /* Loop through all the opponent pieces */

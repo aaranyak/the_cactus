@@ -226,7 +226,7 @@ void unmake_move(Bitboard *board, move_t move, U64 *enpas_file, U64 *castling_ri
     update_sliding_piece_attacks(board); /* Update the sliding piece attack table, since that can be affected by moving blockers */
    
     // Update repetition Table
-    board->repetition_table[board->moves + 1] = board->key; /* Update repetition Table */
+    board->repetition_table[board->moves + 1] = 0; /* Update repetition Table */
     
     return;
 }

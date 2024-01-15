@@ -30,13 +30,13 @@ void sort_moves(move_list_t *move_list, int scores[]);
 void order_moves(move_list_t *move_list, Bitboard *board, int use_hash_move, move_t hash_move, int depth) {
     /* Order moves to be searched using heuristic methods, so that more branches are likely to be pruned.
      * Ordering methods:
-     *  -> Move score from hash table (Not yet implemented).
+     *  -> Move score from hash table 
      *  -> For capture moves, most valuable victim, least valuable attacker.
      *  -> Promoted piece value.
      *  -> Recapured by pawn (penalty).
      *  Think about the following ideas.
-     *  -> Killer moves? (not yet implemented)
-     *  -> History heuristic? (not yet implemented)
+     *  -> Killer moves? 
+     *  -> History heuristic? 
      */
 
     int move_scores[256]; /* List containing all the move scores */
