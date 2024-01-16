@@ -70,6 +70,40 @@ int king_safety_eval(Bitboard *board, U64 occupied) {
 
 }
 
+int pawn_endgame_eval(Bitboard *board, float endgame_w, float endgame_b) {
+    /* Adds extra weightage for pawns that are higher up on the board */
+    int w_pawn_eval = 0; /* Pawn eval for white */
+    int b_pawn_eval = 0; /* Ditto for black */
+    U64 pawn; /* Current pawn position */
+    U64 pawns; /* Pawns bitboard */
+    int pawn_index; /* Pawn position index */
+    
+    // Get white pawn bonus
+    pawns = board->pieces[pawn_w]; /* Get the white pawns bitboard */
+    while (pawns) { /* Loop through each of the pawns */
+        pawn = pawns & -pawns; /* Get next pawn (Isolate LSB) */
+        pawn_index = bitscan(pawn); /* Get the position index of this pawn */
+        w_pawn_eval += endgame_pawn_eval[pawn_index]; /* Add the bonus */
+        pawns ^= pawn; /* Reset LSB */
+    }
+
+    // Get black pawn bonus
+    pawns = board->pieces[pawn_b]; /* Get the black pawns bitboard */
+    while (pawns) { /* Loop through each of the pawns */
+        pawn = pawns & -pawns; /* Get next pawn (Isolate LSB) */
+        pawn_index = bitscan(pawn); /* Get the position index of this pawn */
+        if (63 - pawn_index < 0) printf("Seriously...???\n"); /* Is this causing the bus error (This is soo cursed) */
+        b_pawn_eval += endgame_pawn_eval[63 - pawn_index]; /* Add the bonus */
+        pawns ^= pawn; /* Reset LSB */
+    }
+    
+    w_pawn_eval *= endgame_w; /* Multiply by endgame weight */
+    b_pawn_eval *= endgame_b; /* Multiply by endgame weight */
+
+    return board->side ? w_pawn_eval - b_pawn_eval : b_pawn_eval - w_pawn_eval; /* Return the evaluation for the correct side */
+
+}
+
 int evaluate(Bitboard *board) {
     /* Statically evaluate the board */
     
@@ -96,6 +130,9 @@ int evaluate(Bitboard *board) {
 
     // King safety bonus, decrease eval if king area is being attacked.
     evaluation += king_safety_eval(board, white_mask | black_mask); /* Add it to the evaluation */    
+
+    // Endgame Pawn Eval
+    evaluation += king_dist_eval(board, endgame_w, endgame_b); /* Add the pawn bonus to the eval weighted by endgame value */
 
     // Add piece square evaluation
     int pst_eval; /* Piece-square evaluation */

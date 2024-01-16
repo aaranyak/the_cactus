@@ -7,21 +7,13 @@
 #include "bitboard_utils.h"
 #include "lookup_tables.h"
 
-int pst[64] = {
--50,-40,-30,-30,-30,-30,-40,-50,
--40,-20,  0,  0,  0,  0,-20,-40,
--30,  0, 10, 15, 15, 10,  0,-30,
--30,  5, 15, 20, 20, 15,  5,-30,
--30,  0, 15, 20, 20, 15,  0,-30,
--30,  5, 10, 15, 15, 10,  5,-30,
--40,-20,  0,  5,  5,  0,-20,-40,
--50,-40,-30,-30,-30,-30,-40,-50,
-};
+int pawn_tables[8] = {0, 0, 5, 7, 10, 25, 40, 0};
 
 int main() {
-    Bitboard board = {0,0,0,0};
-    U64 pawn_attacks;
-    U64 position;
-    printf("Popcount - %d\n", popcount(0xffffffff9001e6ff));
+    printf("endgame_pawn_eval[64] = {");
+    for (int i = 0; i < 64; i++)
+        printf(", %d", pawn_tables[i/8]);
+    
+    printf("};\n");
     return 0;
 }
