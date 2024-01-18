@@ -69,12 +69,13 @@ int main(int argc, char **argv) {
     init_board(&board, initial_state, 1);
     
     // Start a game with the GUI 
-    int human_side = 1; /* The side of the human to play */
+    int human_side = 3; /* The side of the human to play */
     char log_filepath[512] = {0}; /* Log file path */
     int to_log = 0;
     // Parse Arguments
     if (argc >= 2) {
         if (!strcmp(argv[1], "black")) human_side = 0; /* Play Black */
+        if (!strcmp(argv[1], "white")) human_side = 1; /* Play Black */
         else if (strcmp(argv[1], "white")) { /* Log file path given */
             to_log = 1; /* Log file */
             strcpy(log_filepath, argv[1]); /* Log this */
@@ -84,6 +85,8 @@ int main(int argc, char **argv) {
             strcpy(log_filepath, argv[2]); /* Log this */
         }
     }
+    
+    if (human_side == 3) return launch_options(&board, argc, argv); /* Options Menu */
     
     return launch_gui(&board, argc, argv, human_side, 10, to_log ? log_filepath : 0);
 }

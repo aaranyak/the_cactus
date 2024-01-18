@@ -371,7 +371,7 @@ void play_human_move(GameState *state, int index) {
                     GTK_WINDOW (window), /* Toplevel window */
                     GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT, /* Flags */
                     /* Here come the buttons */
-                    "_Queen"/* Button title */, 3 /* Response id */, "Bishop", 2, "Knight", 1, "Rook", 0, /* Buttons for each piece to promote to */
+                    "_Queen"/* Button title */, 3 /* Response id */, "_Bishop", 2, "Knight", 1, "Rook", 0, /* Buttons for each piece to promote to */
                     "_Cancel", /* Ditto */
                     -1,
                     NULL /* List ends with null */
@@ -562,12 +562,10 @@ void launch_options_action(GtkApplication *app, struct launch_action_data *data)
      *  -> Custom Starting FEN
      *  -> Log File Path
     */
-
-    Bitboard *board = data->board;
-
     GtkWidget *popup_dialog;
     GtkWidget *content_grid;
     GtkWidget *popup_content; /* The content of the popup */
+    GtkWidget *window, *radio1, *radio2, *box, *entry; 
     
     int response_id;
 
@@ -576,11 +574,10 @@ void launch_options_action(GtkApplication *app, struct launch_action_data *data)
             NULL, /* Toplevel window */
             GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT, /* Flags */
             /* Here come the buttons */
-            "_Play As White", /* Button title */
-            1, /* Response id */
-            "_Play As Black", 0,
+            "_New Game", /* Button title */
+            GTK_RESPONSE_OK, /* Response id */
             "_Cancel", /* Ditto */
-            2,
+            GTK_RESPONSE_CANCEL,
             NULL /* List ends with null */
             );
     
@@ -588,73 +585,28 @@ void launch_options_action(GtkApplication *app, struct launch_action_data *data)
     popup_content = gtk_dialog_get_content_area(GTK_DIALOG (popup_dialog)); /* Where to place the content of the box */
     content_grid = gtk_grid_new(); /* Grid that includes all the entrys and labels */
     
-    // Declare Widgets
-    GtkWidget *search_time;
-    GtkWidget *log_file;
-    GtkWidget *custom_fen;
-    GtkAdjustment *think_time_adjustment;
-
-    // Declare Labels
-    GtkWidget *time_label;
-    GtkWidget *log_label;
-    GtkWidget *fen_label;    
+    box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 2);
+    gtk_box_set_homogeneous (GTK_BOX (box), TRUE);
+ 
+    // Create a radio button with a GtkEntry widget
+    radio1 = gtk_radio_button_new (NULL);
+    entry = gtk_entry_new ();
+    gtk_container_add (GTK_CONTAINER (radio1), entry);
+ 
+    // Create a radio button with a label
+    radio2 = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (radio1),
+                                                          "I’m the second radio button.");
+ 
+    // Pack them into a box, then show all the widgets
+    gtk_box_pack_start (GTK_BOX (box), radio1, 0, 0, 0);
+    gtk_box_pack_start (GTK_BOX (box), radio2, 0, 0, 0);
     
-    // Create Labels
-    time_label = gtk_label_new("Think Time"); /* Create the label */
-    log_label = gtk_label_new("Log File"); /* Create the label */
-    fen_label = gtk_label_new("Custom Position (FEN)"); /* Create the label */
-
-    // Create Inputs
-    think_time_adjustment = gtk_adjustment_new(10, 0, 86400, 1, 1, 1); /* An adjusment, simply the value */
-    search_time = gtk_spin_button_new(think_time_adjustment, 1, 0); /* Think time actual widget */
-    log_file = gtk_file_chooser_button_new("Select File", GTK_FILE_CHOOSER_ACTION_OPEN); /* Select File Button */
-    custom_fen = gtk_entry_new(); /* Create a new entry for a custom FEN string */
-    
-
-    // Format Widgets 
-    gtk_grid_set_row_spacing(GTK_GRID (content_grid), 4); /* Set space between rows in the grid */
-    gtk_grid_set_column_spacing(GTK_GRID (content_grid), 4); /* Set space between columns in the grid */
-    g_object_set(G_OBJECT(content_grid), "margin", 10, (gchar*)0 /* Null-terminated arguments */); /* Add padding of 10px */
-    
-    // Pack Widgets
-    gtk_grid_attach(GTK_GRID (content_grid), time_label, 0, 0, 1, 1);
-    gtk_grid_attach(GTK_GRID (content_grid), search_time, 1, 0, 1, 1);
-    gtk_grid_attach(GTK_GRID (content_grid), log_label, 0, 1, 1, 1);
-    gtk_grid_attach(GTK_GRID (content_grid), log_file, 1, 1, 1, 1);
-    gtk_grid_attach(GTK_GRID (content_grid), fen_label, 0, 2, 1, 2);
-    gtk_grid_attach(GTK_GRID (content_grid), custom_fen, 1, 2, 1, 2);
-    
-    /* pack the grid into the popup */
+    gtk_grid_attach(GTK_GRID (content_grid), box, 0, 0, 1, 1); /* Pack the name label into grid */
     gtk_container_add(GTK_CONTAINER (popup_content), content_grid); /* Add the grid into the popup */
     gtk_widget_show_all(popup_content); /* Show the widgets inside the popup */
-
-    // Run the dialog box
     response_id = gtk_dialog_run(GTK_DIALOG (popup_dialog)); /* Open the dialog */
-    
-    if (response_id == 3) return; /* If they click cancel, do nothing */
 
-    /* All parameters that need to be set for working */
-    int human_side = response_id; /* The side that the human will play */
-    int think_time = 10; /* Time given for engine to think */
-    int use_custom_fen = 0; /* Whether to start from custom position or not */
-    gchar *custom_fen_string; /* Custom Position */
-    gchar *log_file_path; /* Ok I think that's enough for a log file path */
-    int to_log = 0; /* Log this game or not */
-
-    // Get the values 
-    think_time = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(search_time)); /* Get the search time from the spin button */
-    custom_fen_string = (gchar*)gtk_entry_get_text(GTK_ENTRY(custom_fen)); /* Get the fen string text */
-    if (strlen(custom_fen_string) > 0) use_custom_fen = 1; /* If there is a string, use it */
-    log_file_path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(log_file)); /* Get the file path */
-    if (log_file_path) to_log = 1; /* If the log file path is set, set to log */
-    
-    if (use_custom_fen) parse_fen(board, (char*)custom_fen_string); /* If the custom fen is set, use it */
-    
-    gtk_widget_destroy(popup_dialog); /* Close Popup */
-
-    start_game(&app, board, human_side, think_time, to_log ? log_file_path : 0); /* Start the game with specified details */
 }
-
 int launch_options(Bitboard *board, int argc, char **argv) {
     /* This will launch the chess engine, but with options */
     GtkApplication *app; /* This is the app object that will be used for creating windows */

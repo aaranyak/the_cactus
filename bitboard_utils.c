@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "bitboards.h"
+#include "math.h"
 #include "legality_test.h"
 #include "lookup_tables.h"
 #include "zobrist_hash.h"
@@ -138,4 +139,27 @@ void parse_fen(Bitboard *board, char *fen) {
             fen_index++;
         }
     }
+    fen_index++;
+    int ep_file = fen[fen_index] = 'a';
+    if (ep_file >= 0 && ep_file < 8) board->enpas = files[ep_file];
+
+    fen_index++;
+    fen_index++;
+    
+    while (fen[fen_index] > '0' && fen[fen_index] < '9') fen_index++; /* Skip over the halfmove clock */
+
+    fen_index++;
+    fen_index++;
+
+    int num_string_index = 0;
+    int move_count = 0;
+    while (fen[fen_index] > '0' && fen[fen_index] < '9') { /* Get the fullmove counter */
+        move_count += (fen[fen_index] - '0') * pow(10, num_string_index); 
+        fen_index++;
+        num_string_index++;
+    }
+    move_count *= 2;
+    move_count += !board->side ? 0 : 1;
+    board->moves = move_count;
+    
 }
