@@ -140,9 +140,10 @@ void parse_fen(Bitboard *board, char *fen) {
         }
     }
     fen_index++;
-    int ep_file = fen[fen_index] = 'a';
+    int ep_file = fen[fen_index] - 'a';
+    printf("%d\n", ep_file);
     if (ep_file >= 0 && ep_file < 8) board->enpas = files[ep_file];
-
+    if (board->enpas) fen_index++;
     fen_index++;
     fen_index++;
     
@@ -160,6 +161,7 @@ void parse_fen(Bitboard *board, char *fen) {
     }
     move_count *= 2;
     move_count += !board->side ? 0 : 1;
+    
     board->moves = move_count;
     
 }
