@@ -631,7 +631,7 @@ void launch_options_action(GtkApplication *app, struct launch_action_data *data)
     // Run the dialog box
     response_id = gtk_dialog_run(GTK_DIALOG (popup_dialog)); /* Open the dialog */
     
-    if (response_id == 3) return; /* If they click cancel, do nothing */
+    if (response_id != 1 && response_id != 0) return; /* If they click cancel, do nothing */
 
     /* All parameters that need to be set for working */
     int human_side = response_id; /* The side that the human will play */
