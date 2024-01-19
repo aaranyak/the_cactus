@@ -29,6 +29,8 @@
 #define INF INT_MAX
 #define MAX_EXTENSIONS 10
 
+#define ASPIRATION_WINDOW 50
+
 result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_search, int max_time, move_t force_move, int ply, int extensions) {
     /* Generate moves, recursively generate moves from resulting positions until
      * maximum depth is reached, and then evaluate the position, use minmax
@@ -182,18 +184,46 @@ id_result_t iterative_deepening(Bitboard *board, int search_time) {
     
     max_time = (int)time(NULL); /* Get the current time */
     max_time += search_time; /* Add the time taken to search */
+    
+    // Aspiration Windows
+    int alpha; /* Original lower bound */
+    int beta; /* Original higher bound */
 
     while (!interrupt_search) { /* Until the search has not been interrupted */
         // Set the previous result
         // Do the search
-        depth++; /* Increase the depth */
-        clear_killers(); /* Clear killer moves */
-        clear_history(); /* Clear history heuristic */
         current_result = search(board, depth, -INF, INF, &interrupt_search,(depth >= 4) ? max_time : INF, (depth > 1) ? result.move : 0, 1, 0); /* Search at the current depth */
         if (current_result.move == 0) break; /* If the search is interrupted before anything happens, get out. */
         result.evaluation = current_result.evaluation;
         result.move = current_result.move;
         result.depth = depth;
+    }
+
+    while (!interrupt_search) { /* Until the search has been interrupted */
+        // Clear pre-initialized values.
+        depth++; /* Increase the depth */
+        clear_killers(); /* Clear killer moves */
+        clear_history(); /* Clear history heuristic */
+        
+        if (depth < 4) { /* Don't use aspiration windows */
+            current_result = search(board, depth, -INF, INF, &interrupt_search,(depth >= 4) ? max_time : INF, (depth > 1) ? result.move : 0, 1, 0); /* Search at the current depth */
+        } else { /* If depth 4 or greater, use aspiration windows */
+            current_result = search(board, depth, alpha, beta, &interrupt_search,(depth >= 4) ? max_time : INF, (depth > 1) ? result.move : 0, 1, 0); /* Search at the current depth */
+            if (current_result.evaluation == alpha || current_result.evaluation == beta) { /* If bounds are broken */
+                current_result = search(board, depth, -INF, INF, &interrupt_search,(depth >= 4) ? max_time : INF, (depth > 1) ? result.move : 0, 1, 0); /* Search all over again */
+            }
+        }
+
+        if (current_result.move == 0) break; /* If the search is interrupted before anything happens, get out. */
+        
+        // Set the evaluation
+        result.evaluation = current_result.evaluation;
+        result.move = current_result.move;
+        result.depth = depth;
+        
+        // Set the aspiration window
+        alpha = result.evaluation - ASPIRATION_WINDOW; /* Alpha - Lesser than result */
+        beta = result.evaluation + ASPIRATION_WINDOW; /* Beta - greater than result */
     }
 
     return result;
