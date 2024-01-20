@@ -104,6 +104,7 @@ void *engine_think(void *raw_data) {
     HWND window_handle = data->window_handle;
     id_result_t result; /* Search result */
     result = iterative_deepening(state->board, state->search_time);
+    printf("Searched to a depth of %d, Evaluation %d\n", result.depth, result.evaluation);
     play_move_on_board(state, result.move); /* Play the move on the board, and update values */
     redraw_window(window_handle, 0); /* Redraw Window */
     free(data); /* Free the thread data */
@@ -222,6 +223,19 @@ void play_human_move(GameState *state, int index, HWND window_handle) {
         if (from == state->selected_position && to == index && move_piece == state->selected_piece) { /* If this is a matching move */
             if (move & MM_PRO) { /* If this is a pawn promotion move, check which piece to promote to */
                 int response = -1;
+                char piece_messages[4][3000] = {"Would you like to promote to a ROOK?", "Would you like to promote to a KNIGHT?", "Would you like to promote to a BISHOP?", "Would you like to promote to a QUEEN?"};
+                for (int piece = 0; piece < 4; piece++) {
+                    int message_id = MessageBox(
+                                NULL,
+                                piece_messages[piece],
+                                "Promote to:",
+                                MB_ICONQUESTION | MB_YESNO
+                            );
+                    if (message_id == IDYES) {
+                        response = piece;
+                        break;
+                    }
+                }
                 if (response == -1) return;
                 else { /* Set the move to piece type */
                     move &= ~MM_PPP; /* Clear the current one */
