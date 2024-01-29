@@ -42,4 +42,5 @@ typedef struct GameState {
 } GameState;
 int launch_gui(Bitboard *board, int argc, char **argv, int human_side, int search_time, char *log_filename);
 int launch_options(Bitboard *board, int argc, char **argv);
+move_list_t generate_legal_moves(Bitboard *board);
 #endif

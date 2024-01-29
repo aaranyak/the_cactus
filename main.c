@@ -44,10 +44,17 @@
 #include "zobrist_hash.h"
 #include "tp_table.h"
 #include "gui_game.h"
+#include "uci.h"
 #define INF INT_MAX
+
+//#define UCI
 
 int main(int argc, char **argv) {
     /* Run chess engine */
+    printf("The Cactus - A Chess Engine that is supposed to defeat humans in chess\n");
+#ifdef UCI
+    return uci_engine(); /* Run the UCI engine */
+#endif
 
     // The board state to start with
     char initial_state[64] = {
@@ -67,7 +74,7 @@ int main(int argc, char **argv) {
     // Initialize the board */
     Bitboard board = {0,0,0,0}; /* Allocate space for bitboard */
     init_board(&board, initial_state, 1);
-    
+
     // Start a game with the GUI 
     int human_side = 3; /* The side of the human to play */
     char log_filepath[512] = {0}; /* Log file path */

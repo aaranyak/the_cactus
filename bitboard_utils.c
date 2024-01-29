@@ -159,7 +159,7 @@ void parse_fen(Bitboard *board, char *fen) {
         num_string_index++;
     }
     move_count *= 2;
-    move_count += !board->side ? 0 : 1;
+    move_count += board->side ? 0 : 1;
     
     board->moves = move_count;
     
