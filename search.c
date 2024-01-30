@@ -106,6 +106,24 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
         int reduction;
         int in_check = is_check(board, board->side); /* If in check, don't do LMR */
         int extension;
+        
+        // Null Move Pruning (Basically check if null move causes beta cutoff.)
+        if (!in_check) { /* Or in illegal position */
+            board->side ^= 1; /* Switch sides */
+            board->key ^= side_hash; /* Hash */
+            board->moves++; /* Moves */
+            // Do the actual search.
+            result = search(board, depth - 1, -beta, -alpha, interrupt_search, max_time, 0, ply + 1, extensions); /* Recursively call itself to search at an even higher depth */
+            board->side ^= 1; /* Toggle side */
+            board->key ^= side_hash; /* Yep... */
+            board->moves--; /* Minus Minus */
+            
+            if (-result.evaluation >= beta) {
+                /* Check for beta cuttof */
+                return (result_t){beta, 0}; /* Because there is no move */
+            }
+        }
+        
         for (index = 0; index < legal_moves.count; index++) { /* Loop through all the legal moves */
             move = legal_moves.moves[index]; /* Current move */
             make_move(board, move, &enpas, &castling, &key, &ps_eval); /* Make the move on the board */
@@ -134,7 +152,7 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
 
             result = search(board, cutoff(depth - 1 - reduction + extension), -beta, -alpha, interrupt_search, max_time, 0, ply + 1, extensions + extension); /* Recursively call itself to search at an even higher depth */
 
-            if (result.evaluation > alpha && reduction) /* If a reduced move increases alpha */
+            if (reduction && -result.evaluation > alpha) /* If a reduced move increases alpha */
                 /* Then do another search to the full depth */
                 result = search(board, depth - 1, -beta, -alpha, interrupt_search, max_time, 0, ply + 1, extensions); /* Recursively call itself to search at an even higher depth */
 
