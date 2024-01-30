@@ -33,6 +33,7 @@ int get_word(char input[], char output[], int start) {
     
     int index;
     int char_index = 0;
+    output[0] = 0; /* Just in case we don't get anything */
     for (index = start; 1; index++) { /* Loop through the letters */
         if (input[index] == 0 || input[index] == ' ') break; /* Until reached a space or end of string */
         output[char_index] = input[index]; /* Add it */
@@ -131,11 +132,12 @@ void parse_position(Bitboard *board, char input_line[], char output_line[], int 
         U64 a, b, c; int d; /* These are saved stuff */
         if (!strcmp(next_word, "moves")) { /* If the next word is "moves" */
             /* Loop through each move */
-            while (1) { /* Until the last move has been reached (I seem to be using quite a few infinite loops around here */
+            while (1) { /* Until the last move has been reached (I seem to be using quite a few infinite loops around here) */
                 if (!input_line[next_index]) break; /* Reached end of the line */
                 next_index = get_word(input_line, next_word, next_index); /* Get the next move */
                 current_move = parse_move(board, next_word); /* Parse the move */
-                make_move(board, current_move, &a, &b, &c, &d); /* Make the move on the board */
+                if (current_move) make_move(board, current_move, &a, &b, &c, &d); /* Make the move on the board */
+                else break; /* Simple... Problem Fixed (hopefully) */
             }
         }
     }

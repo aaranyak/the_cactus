@@ -47,7 +47,7 @@
 #include "uci.h"
 #define INF INT_MAX
 
-//#define UCI
+#define UCI
 
 int main(int argc, char **argv) {
     /* Run chess engine */

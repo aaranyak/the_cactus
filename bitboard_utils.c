@@ -21,6 +21,7 @@ void clear_board(Bitboard *board) {
     for (int i = 0; i < 65536; i++) board->repetition_table[i] = 0; /* Clear repetition table */
     // Empty everything else
     board->castling_rights = 0;
+    board->piece_square_eval = 0;
     board->enpas = 0;
     board->side = 0;
     board->key = 0;
@@ -83,6 +84,29 @@ void render_board(Bitboard *board) {
         sprintf(board_print, "%s\n   +---+---+---+---+---+---+---+---+\n", board_print); /* Next line */
     }
     printf("%sSide to move - %s\nPiece Square Eval - %d\nMoves - %d\nKey - 0x%016lx\n\n", board_print, board->side ? "White" : "Black", board->piece_square_eval, board->moves, board->key); /* print board */
+}
+
+void print_uci_board(Bitboard *board) {
+    /* Renders a bitboard in the UCI log */
+    char board_print[1024]; /* The string to print out the board */
+    char letters[12] = "RNBQKPrnbqkp"; /* The letter names of the pieces */
+    char current_letter; /* Exactly what it means */
+    U64 position;
+    sprintf(board_print, "info string     a   b   c   d   e   f   g   h  \ninfo string   +---+---+---+---+---+---+---+---+\n"); /* Print first line */
+    for (int y = 7; y >= 0; y--) { /* Loop through rows (backward) */
+        sprintf(board_print, "%sinfo string %d |", board_print /* After everything */, y + 1); /* Print the first number */
+        for (int x = 0; x < 8; x++) { /* Columns */
+            position = 1;
+            position <<= ((y * 8) + x); /* Bit that we are interested in */
+            current_letter = ' '; /* Current letter */
+            for (int p = 0; p < 12; p++) { /* Loop through piece types */
+                if (position & board->pieces[p]) current_letter = letters[p]; /* Set the piece type */
+            }
+            sprintf(board_print, "%s %c |", board_print, current_letter); /* Blank square (just for now) */
+        }
+        sprintf(board_print, "%s\ninfo string   +---+---+---+---+---+---+---+---+\n", board_print); /* Next line */
+    }
+    printf("%sinfo string Side to move - %s\ninfo string Piece Square Eval - %d\ninfo string Moves - %d\ninfo string Key - 0x%016lx\ninfo string \n", board_print, board->side ? "White" : "Black", board->piece_square_eval, board->moves, board->key); /* print board */
 }
 
 void parse_fen(Bitboard *board, char *fen) {
