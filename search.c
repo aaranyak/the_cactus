@@ -106,6 +106,24 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
         int reduction;
         int in_check = is_check(board, board->side); /* If in check, don't do LMR */
         int extension;
+        
+        // Null Move Pruning (Basically check if null move causes beta cutoff.)
+        if (!in_check) { /* Or in illegal position */
+            board->side ^= 1; /* Switch sides */
+            board->key ^= side_hash; /* Hash */
+            board->moves++; /* Moves */
+            // Do the actual search.
+            result = search(board, depth - 1, -beta, -alpha, interrupt_search, max_time, 0, ply + 1, extensions); /* Recursively call itself to search at an even higher depth */
+            board->side ^= 1; /* Toggle side */
+            board->key ^= side_hash; /* Yep... */
+            board->moves--; /* Minus Minus */
+            
+            if (-result.evaluation >= beta) {
+                /* Check for beta cuttof */
+                return (result_t){beta, 0}; /* Because there is no move */
+            }
+        }
+        
         for (index = 0; index < legal_moves.count; index++) { /* Loop through all the legal moves */
             move = legal_moves.moves[index]; /* Current move */
             make_move(board, move, &enpas, &castling, &key, &ps_eval); /* Make the move on the board */
@@ -134,7 +152,7 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
 
             result = search(board, cutoff(depth - 1 - reduction + extension), -beta, -alpha, interrupt_search, max_time, 0, ply + 1, extensions + extension); /* Recursively call itself to search at an even higher depth */
 
-            if (result.evaluation > alpha && reduction) /* If a reduced move increases alpha */
+            if (reduction && -result.evaluation > alpha) /* If a reduced move increases alpha */
                 /* Then do another search to the full depth */
                 result = search(board, depth - 1, -beta, -alpha, interrupt_search, max_time, 0, ply + 1, extensions); /* Recursively call itself to search at an even higher depth */
 
@@ -197,6 +215,59 @@ id_result_t iterative_deepening(Bitboard *board, int search_time) {
             current_result = search(board, depth, alpha, beta, &interrupt_search,(depth >= 4) ? max_time : INF, (depth > 1) ? result.move : 0, 1, 0); /* Search at the current depth */
             if (current_result.move == 0) { /* No move was able to increase the alpha */
                 if (interrupt_search) break; /* If search is finished without valuable results, get out */
+                else { /* No move could increase alpha */
+                    if (alpha != -INF) alpha -= (result.evaluation - alpha); /* Not 100% Checkmate - Double lower bound window */
+                    continue; /* Don't stop the loop */
+                }
+            } else if (current_result.evaluation == beta) {
+                /* Evaluation caused beta cutoff */
+                if (beta != INF) /* If not 100% checkmate */ beta += (beta - result.evaluation); /* Double the higher bound window */
+                continue;
+            }
+
+            break; /* If everything went Ok, break */
+        }
+        
+        if (current_result.move == 0) break; /* If no good move found, use from previous search */
+        
+        // Set the bounds
+        if (depth > 3) { /* Only use aspiration windows after this */
+            alpha = current_result.evaluation - START_WINDOW; /* A little wider than the last eval */
+            beta = current_result.evaluation + START_WINDOW; /* A little wider than the last eval */
+        }
+
+        // Set the new result.
+        result.move = current_result.move;
+        result.evaluation = current_result.evaluation;
+        result.depth = depth;
+    }
+
+    return result; /* Be Productive */
+
+}
+
+id_result_t iterative_deepening_interruptable(Bitboard *board, int search_time, int *interrupt_search) {
+    /* Searches the board using iterative deepening that you can stop when you want */
+    int depth = 0; /* Current depth */
+    int max_time; /* Maximum time */
+    *interrupt_search = 0; /* Whether to interrupt the search */
+    id_result_t result; /* The final iterative deepening result */
+    result_t current_result; /* The Current Result */
+    
+    max_time = (int)time(NULL); /* Get the current time */
+    max_time += search_time; /* Add the time taken to search */
+    // Aspiration Windows Iterative Deepening (Starts by taking a bound, then searching further).
+    int alpha = -INF; /* Lower bound of window */
+    int beta = INF; /* Higher bound of window */
+    while (!*interrupt_search) { /* Until the search has not been interrupted */
+        depth++; /* Increase the depth */
+        // Aspiration widening loop - Widen aspiration window gradually.
+        while (!*interrupt_search) { /* Slowly widen the aspiration windows loop */
+            clear_killers(); /* Clear killer moves */
+            clear_history(); /* Clear history heuristic */
+            current_result = search(board, depth, alpha, beta, interrupt_search, (depth >= 4) ? max_time : INF, (depth > 1) ? result.move : 0, 1, 0); /* Search at the current depth */
+            if (current_result.move == 0) { /* No move was able to increase the alpha */
+                if (*interrupt_search) break; /* If search is finished without valuable results, get out */
                 else { /* No move could increase alpha */
                     if (alpha != -INF) alpha -= (result.evaluation - alpha); /* Not 100% Checkmate - Double lower bound window */
                     continue; /* Don't stop the loop */

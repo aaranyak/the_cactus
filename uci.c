@@ -153,6 +153,7 @@ struct think_data {
     Bitboard *board;
     int think_time;
     int *thinking;
+    int *interrupt_search;
     int *ready_command_sent;
 };
 
@@ -163,20 +164,21 @@ void *think_thread_function(void *think_data_uncasted) {
     Bitboard *board = data->board;
     int think_time = data->think_time;
     int *thinking = data->thinking;
+    int *interrupt_search = data->interrupt_search;
     int *ready_command_sent = data->ready_command_sent;
     
     free(data); /* Because we don't need this anymore */
 
     // Declare
     id_result_t result;
-    result = iterative_deepening(board, think_time); /* start thinking */ 
-
+    int start_time = (int)time(NULL); /* The time we started thinking at */
+    result = iterative_deepening_interruptable(board, think_time, interrupt_search); /* start thinking */ 
+    int end_time = (int)time(NULL); /* Time thinking stopped */
     *thinking = 0; /* Stop thinking */
-
     char move_string[64] = {0}; /* Will contain the move name */
     generate_move_string(board, result.move, move_string); /* Get the string */
     setbuf(stdout, NULL); /* Somehow it makes it magically work */
-    printf("info depth %d time %d score cp %d\n", result.depth, think_time, result.evaluation); /* Debugging data */
+    printf("info depth %d time %d score cp %d\n", result.depth, end_time - start_time, result.evaluation); /* Debugging data */
     printf("info string Get Poked by the Kaktus Poke!\n"); /* Seriously */
     printf("bestmove %s\n", move_string); /* Send best move as well */
     
@@ -187,20 +189,21 @@ void *think_thread_function(void *think_data_uncasted) {
     }
 }
 
-void run_thinking_thread(Bitboard *board, int think_time, int *thinking, int *ready_command_sent) {
+void run_thinking_thread(Bitboard *board, int think_time, int *thinking, int *ready_command_sent, int *interrupt_search) {
     /* Pack data and send to thinking thread */
     struct think_data *data = (struct think_data*)malloc(sizeof(struct think_data)); /* Allocate data memory */
     // Pack data into struct
     data->board = board;
     data->think_time = think_time;
     data->thinking = thinking;
+    data->interrupt_search = interrupt_search;
     data->ready_command_sent = ready_command_sent;
     // Start a thread
     pthread_t think_thread;
     int retval = pthread_create(&think_thread, NULL, think_thread_function, data); /* Start the thread */
 } 
 
-void parse_go(Bitboard *board, char input_line[], char output_line[], int *engine_running, int *thinking, int *ready_command_sent, int next_index) {
+void parse_go(Bitboard *board, char input_line[], char output_line[], int *engine_running, int *thinking, int *ready_command_sent, int next_index, int *interrupt_search) {
     /* Parse the "go" command */
     
     int think_time = 10; /* This is the think time given */
@@ -218,7 +221,7 @@ void parse_go(Bitboard *board, char input_line[], char output_line[], int *engin
     while (1) { /* Until the sentence is over */
         if (input_line[next_index - 1] == 0) break; /* Done... */
         next_index = get_word(input_line, current_word, next_index); /* Get the next word */
-        
+
         if (!strcmp(current_word, "wtime")) {
             next_index = get_word(input_line, current_word, next_index); /* Get the white time remaining */
             sscanf(current_word, "%d", &w_remaining); /* Get the time remaining */
@@ -234,9 +237,12 @@ void parse_go(Bitboard *board, char input_line[], char output_line[], int *engin
         } else if (!strcmp(current_word, "movetime")) {
             next_index = get_word(input_line, current_word, next_index); /* Get the fixed move time*/
             sscanf(current_word, "%d", &fixed_time); /* Get the time */
+        } else if (!strcmp(current_word, "infinite")) { /* Go forever */
+            fixed_time = INF; /* Yes this is actually possible */
+            break;
         }
     }
-    
+
     if (fixed_time != -1) {
         /* Maximum time given */
         think_time = (fixed_time / 1000) - 1; /* Calculate fixed think time */
@@ -247,11 +253,11 @@ void parse_go(Bitboard *board, char input_line[], char output_line[], int *engin
 
     *thinking = 1; /* Currently thinking */
     sprintf(output_line, "info string Starting to think...\n");
-    run_thinking_thread(board, think_time, thinking, ready_command_sent); /* Run thread */
+    run_thinking_thread(board, think_time, thinking, ready_command_sent, interrupt_search); /* Run thread */
     
 } 
 
-void parse_uci_command(Bitboard *board, char input_line[], char output_line[], int *engine_running, int *thinking, int *ready_command_sent) {
+void parse_uci_command(Bitboard *board, char input_line[], char output_line[], int *engine_running, int *thinking, int *ready_command_sent, int *interrupt_search) {
     /* Parses the UCI command, based on what it is */
     if (!strcmp(input_line, "uci")) {
         /* If the command sent was he "uci" command 
@@ -284,6 +290,9 @@ void parse_uci_command(Bitboard *board, char input_line[], char output_line[], i
     } else if (!strcmp(input_line, "ucinewgame")) {
         /* New game message... */
         sprintf(output_line, "info string So are you ready...\n"); /* Input message */
+    } else if (!strcmp(input_line, "stop")) {
+        /* Stop thinking` */
+        *interrupt_search = 1; /* Yeah!!! */
     }
 
     // Handle other commands differently.
@@ -316,7 +325,7 @@ void parse_uci_command(Bitboard *board, char input_line[], char output_line[], i
             sprintf(output_line, ""); /* Put nothing here */
         } else if (!strcmp(command_word, "go")) {
             /* If the command is "go" */
-            parse_go(board, input_line, output_line, engine_running, thinking, ready_command_sent, next_index); /* Parse the go command */
+            parse_go(board, input_line, output_line, engine_running, thinking, ready_command_sent, next_index, interrupt_search); /* Parse the go command */
             return;
         }
     }
@@ -341,6 +350,7 @@ int uci_engine() {
     char input_line[2048] = {0}; /* This is the final input */
     char output_line[2048] = {0}; /* Again, string containing output */
     int engine_running = 1; /* For stopping the infinite loop */
+    int interrupt_search = 0; /* Don't yet interrupt search */
     size_t idontknowwhyweneedthis = 0; /* But we do... */
     
     int thinking = 0;
@@ -355,7 +365,7 @@ int uci_engine() {
         
         getline(&raw_input, &idontknowwhyweneedthis, stdin); /* This will read the input line from the console */
         sscanf(raw_input, "%2046[^\n]", input_line); /* Format it properly */
-        parse_uci_command(&board, input_line, output_line, &engine_running, &thinking, &ready_command_sent); /* Parses the UCI command */
+        parse_uci_command(&board, input_line, output_line, &engine_running, &thinking, &ready_command_sent, &interrupt_search); /* Parses the UCI command */
         printf("%s", output_line); /* Print the output */
     }
     return 0;
