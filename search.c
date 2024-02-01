@@ -28,7 +28,7 @@
 
 #define INF INT_MAX
 #define MAX_EXTENSIONS 10
-
+#define R 2 /* Null move reduction */
 #define START_WINDOW 25
 
 result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_search, int max_time, move_t force_move, int ply, int extensions) {
@@ -108,12 +108,13 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
         int extension;
         
         // Null Move Pruning (Basically check if null move causes beta cutoff.)
-        if (!in_check) { /* Or in illegal position */
+        int null_move_reduction = depth - R - 1; /* First value of R */
+        if (!in_check && ply > 1 && cutoff(null_move_reduction)) { /* Or in illegal position */
             board->side ^= 1; /* Switch sides */
             board->key ^= side_hash; /* Hash */
             board->moves++; /* Moves */
             // Do the actual search.
-            result = search(board, depth - 1, -beta, -alpha, interrupt_search, max_time, 0, ply + 1, extensions); /* Recursively call itself to search at an even higher depth */
+            result = search(board, null_move_reduction, -beta, -alpha, interrupt_search, max_time, 0, ply + 1, extensions); /* Recursively call itself to search at an even higher depth */
             board->side ^= 1; /* Toggle side */
             board->key ^= side_hash; /* Yep... */
             board->moves--; /* Minus Minus */
