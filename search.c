@@ -132,7 +132,7 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
 
             result = search(board, cutoff(depth - 1 - reduction + extension), -beta, -alpha, interrupt_search, max_time, 0, ply + 1, extensions + extension); /* Recursively call itself to search at an even higher depth */
 
-            if (result.evaluation > alpha && reduction) /* If a reduced move increases alpha */
+            if (reduction && -result.evaluation > alpha) /* If a reduced move increases alpha */
                 /* Then do another search to the full depth */
                 result = search(board, depth - 1, -beta, -alpha, interrupt_search, max_time, 0, ply + 1, extensions); /* Recursively call itself to search at an even higher depth */
 
@@ -152,7 +152,6 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
                 if (!(move & MM_PRO || move & MM_CAP || move & MM_EPC)) { /* If this is not a capture or promotion move */
                     // Add it to the killer moves list
                     add_killer(move, ply); /* Add the move to the killer moves list */
-                    set_history(move, depth); /* Add this to history heuristic */
                 }
 
                 return (result_t){beta, move}; /* Need not search further */
