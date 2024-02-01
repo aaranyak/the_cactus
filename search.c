@@ -80,10 +80,10 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
     //    // Check if this is a draw
     //    U64 piece_boards = colour_mask(board, 0) | colour_mask(board, 1); /* Get the total board */
     //    if (popcount(piece_boards) < 3) /* If only two kings are left */
-    //        return (result_t){0, 0}; /* Return a draw (only two kings left) */
-    //    // Three fold repetition
-    //    if (get_repetitions(board) >= 3) /* Check if the position repeats more than 2 times */
-    //        return (result_t){0, 0}; /* Return a draw. */
+        //    return (result_t){0, 0}; /* Return a draw (only two kings left) */
+       // Three fold repetition
+       if (get_repetitions(board) >= 3) /* Check if the position repeats more than 2 times */
+           return (result_t){0, 0}; /* Return a draw. */
             
         
         // Order the moves
@@ -207,27 +207,31 @@ id_result_t iterative_deepening(Bitboard *board, int search_time) {
     // Aspiration Windows Iterative Deepening (Starts by taking a bound, then searching further).
     int alpha = -INF; /* Lower bound of window */
     int beta = INF; /* Higher bound of window */
+    printf("Started Iterative Deepening...\n"); /* Log */
     while (!interrupt_search) { /* Until the search has not been interrupted */
         depth++; /* Increase the depth */
         // Aspiration widening loop - Widen aspiration window gradually.
+        printf("Started Search (Depth %d):", depth); /* Debug */
         while (!interrupt_search) { /* Slowly widen the aspiration windows loop */
             clear_killers(); /* Clear killer moves */
             clear_history(); /* Clear history heuristic */
-            current_result = search(board, depth, alpha, beta, &interrupt_search,(depth >= 4) ? max_time : INF, (depth > 1) ? result.move : 0, 1, 0); /* Search at the current depth */
+            printf(" (%d, %d)", alpha, beta); /* Print higher and lower bounds */
+            current_result = search(board, depth, alpha, beta, &interrupt_search, max_time, (depth > 1) ? result.move : 0, 1, 0); /* Search at the current depth */
             if (current_result.move == 0) { /* No move was able to increase the alpha */
                 if (interrupt_search) break; /* If search is finished without valuable results, get out */
                 else { /* No move could increase alpha */
-                    if (alpha != -INF) alpha -= (result.evaluation - alpha); /* Not 100% Checkmate - Double lower bound window */
+                    if (alpha != -INF) alpha -= (result.evaluation - alpha) * 3; /* Not 100% Checkmate - Quadriple lower bound window */
                     continue; /* Don't stop the loop */
                 }
             } else if (current_result.evaluation == beta) {
                 /* Evaluation caused beta cutoff */
-                if (beta != INF) /* If not 100% checkmate */ beta += (beta - result.evaluation); /* Double the higher bound window */
+                if (beta != INF) /* If not 100% checkmate */ beta += (beta - result.evaluation) * 3; /* Quadriple the higher bound window */
                 continue;
             }
 
             break; /* If everything went Ok, break */
         }
+        printf("\n");
         
         if (current_result.move == 0) break; /* If no good move found, use from previous search */
         
@@ -242,6 +246,7 @@ id_result_t iterative_deepening(Bitboard *board, int search_time) {
         result.evaluation = current_result.evaluation;
         result.depth = depth;
     }
+    printf("\n");
 
     return result; /* Be Productive */
 
