@@ -106,7 +106,7 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
         int extension;
 
         // Null Move Pruning (Basically check if null move causes beta cutoff.)
-        if (!in_check) { /* Or in illegal position */
+        if (!in_check && ply > 1) { /* Or in illegal position */
             board->side ^= 1; /* Switch sides */
             board->key ^= side_hash; /* Hash */
             board->moves++; /* Moves */
