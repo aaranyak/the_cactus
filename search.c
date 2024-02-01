@@ -81,8 +81,8 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
     //    if (popcount(piece_boards) < 3) /* If only two kings are left */
     //        return (result_t){0, 0}; /* Return a draw (only two kings left) */
     //    // Three fold repetition
-    //    if (get_repetitions(board) >= 3) /* Check if the position repeats more than 2 times */
-    //        return (result_t){0, 0}; /* Return a draw. */
+       if (get_repetitions(board) >= 3) /* Check if the position repeats more than 2 times */
+           return (result_t){0, 0}; /* Return a draw. */
             
         
         // Order the moves
