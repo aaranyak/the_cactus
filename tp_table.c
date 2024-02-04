@@ -1,6 +1,7 @@
 /* Code for managing the transposition hash table */
 
 #include <stdio.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <time.h>
 #include "bitboards.h"
@@ -17,8 +18,8 @@
 
 int hash_move_used = 0;
 
-entry_t tp_table[(TP_SIZE  * 1000000) / sizeof(entry_t)]; /* Transposition Table Size is set above */
-int tp_size = (TP_SIZE  * 1000000) / sizeof(entry_t); /* Set TP Table Size */
+shared_entry_t tp_table[(TP_SIZE  * 1000000) / sizeof(shared_entry_t)]; /* Transposition Table Size is set above */
+int tp_size = (TP_SIZE  * 1000000) / sizeof(shared_entry_t); /* Set TP Table Size */
 
 void init_tp_table() {
     /* Resets all the values in the TP Table */
