@@ -203,51 +203,25 @@ id_result_t iterative_deepening(Bitboard *board, int search_time) {
     max_time = (int)time(NULL); /* Get the current time */
     max_time += search_time; /* Add the time taken to search */
 
-    // Aspiration Windows Iterative Deepening (Starts by taking a bound, then searching further).
-    int alpha = -INF; /* Lower bound of window */
-    int beta = INF; /* Higher bound of window */
     while (!interrupt_search) { /* Until the search has not been interrupted */
+        // Set the previous result
+        // Do the search
         depth++; /* Increase the depth */
-        // Aspiration widening loop - Widen aspiration window gradually.
-        while (!interrupt_search) { /* Slowly widen the aspiration windows loop */
-            clear_killers(); /* Clear killer moves */
-            clear_history(); /* Clear history heuristic */
-            current_result = search(board, depth, alpha, beta, &interrupt_search,(depth >= 4) ? max_time : INF, (depth > 1) ? result.move : 0, 1, 0); /* Search at the current depth */
-            if (current_result.move == 0) { /* No move was able to increase the alpha */
-                if (interrupt_search) break; /* If search is finished without valuable results, get out */
-                else { /* No move could increase alpha */
-                    if (alpha != -INF) alpha -= (result.evaluation - alpha); /* Not 100% Checkmate - Double lower bound window */
-                    continue; /* Don't stop the loop */
-                }
-            } else if (current_result.evaluation == beta) {
-                /* Evaluation caused beta cutoff */
-                if (beta != INF) /* If not 100% checkmate */ beta += (beta - result.evaluation); /* Double the higher bound window */
-                continue;
-            }
-
-            break; /* If everything went Ok, break */
-        }
-        
-        if (current_result.move == 0) break; /* If no good move found, use from previous search */
-        
-        // Set the bounds
-        if (depth > 3) { /* Only use aspiration windows after this */
-            alpha = current_result.evaluation - START_WINDOW; /* A little wider than the last eval */
-            beta = current_result.evaluation + START_WINDOW; /* A little wider than the last eval */
-        }
-
-        // Set the new result.
-        result.move = current_result.move;
+        clear_killers(); /* Clear killer moves */
+        clear_history(); /* Clear history heuristic */
+        current_result = search(board, depth, -INF, INF, &interrupt_search,(depth >= 4) ? max_time : INF, (depth > 1) ? result.move : 0, 1, 0); /* Search at the current depth */
+        if (current_result.move == 0) break; /* If the search is interrupted before anything happens, get out. */
         result.evaluation = current_result.evaluation;
+        result.move = current_result.move;
         result.depth = depth;
     }
 
-    return result; /* Be Productive */
-
+    return result; /* Be productive */
 }
 
 id_result_t iterative_deepening_interruptable(Bitboard *board, int search_time, int *interrupt_search) {
     /* Searches the board using iterative deepening that you can stop when you want */
+    /* Searches the board using iterative deepening */
     int depth = 0; /* Current depth */
     int max_time; /* Maximum time */
     *interrupt_search = 0; /* Whether to interrupt the search */
@@ -256,45 +230,20 @@ id_result_t iterative_deepening_interruptable(Bitboard *board, int search_time, 
     
     max_time = (int)time(NULL); /* Get the current time */
     max_time += search_time; /* Add the time taken to search */
-    // Aspiration Windows Iterative Deepening (Starts by taking a bound, then searching further).
-    int alpha = -INF; /* Lower bound of window */
-    int beta = INF; /* Higher bound of window */
+
     while (!*interrupt_search) { /* Until the search has not been interrupted */
+        // Set the previous result
+        // Do the search
         depth++; /* Increase the depth */
-        // Aspiration widening loop - Widen aspiration window gradually.
-        while (!*interrupt_search) { /* Slowly widen the aspiration windows loop */
-            clear_killers(); /* Clear killer moves */
-            clear_history(); /* Clear history heuristic */
-            current_result = search(board, depth, alpha, beta, interrupt_search, (depth >= 4) ? max_time : INF, (depth > 1) ? result.move : 0, 1, 0); /* Search at the current depth */
-            if (current_result.move == 0) { /* No move was able to increase the alpha */
-                if (*interrupt_search) break; /* If search is finished without valuable results, get out */
-                else { /* No move could increase alpha */
-                    if (alpha != -INF) alpha -= (result.evaluation - alpha); /* Not 100% Checkmate - Double lower bound window */
-                    continue; /* Don't stop the loop */
-                }
-            } else if (current_result.evaluation == beta) {
-                /* Evaluation caused beta cutoff */
-                if (beta != INF) /* If not 100% checkmate */ beta += (beta - result.evaluation); /* Double the higher bound window */
-                continue;
-            }
-
-            break; /* If everything went Ok, break */
-        }
-        
-        if (current_result.move == 0) break; /* If no good move found, use from previous search */
-        
-        // Set the bounds
-        if (depth > 3) { /* Only use aspiration windows after this */
-            alpha = current_result.evaluation - START_WINDOW; /* A little wider than the last eval */
-            beta = current_result.evaluation + START_WINDOW; /* A little wider than the last eval */
-        }
-
-        // Set the new result.
-        result.move = current_result.move;
+        clear_killers(); /* Clear killer moves */
+        clear_history(); /* Clear history heuristic */
+        current_result = search(board, depth, -INF, INF, interrupt_search,(depth >= 4) ? max_time : INF, (depth > 1) ? result.move : 0, 1, 0); /* Search at the current depth */
+        if (current_result.move == 0) break; /* If the search is interrupted before anything happens, get out. */
         result.evaluation = current_result.evaluation;
+        result.move = current_result.move;
         result.depth = depth;
     }
 
-    return result; /* Be Productive */
+    return result; /* Be productive */
 
 }
