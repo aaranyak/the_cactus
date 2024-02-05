@@ -25,6 +25,7 @@ typedef struct entry_t {
 
 typedef struct shared_entry_t {
     /* This is the hash table entry that will be stored in the actual table */
+    U64 key; /* This is the actual key (To check for a corrupted entry, while replacing */
     U64 key_1; /* This is the key xor'd with the first data segment */
     U64 key_2; /* This will be the key xor'd with the second data segment */
     U64 data_1; /* First data segment - contains evaluation and best move respectively */
@@ -48,6 +49,8 @@ typedef struct shared_entry_t {
 #define ES_TYPE 56 /* Node type */
 
 
+#define invalid_entry(e) (e.depth == -1)
+#define EMPTY_ENTRY (entry_t){0,0,-1,0,0,0}
 void add_entry(U64 key, int eval, int depth, int age, move_t best_move, node_t node_type);
 entry_t get_entry(U64 key);
 void init_tp_table();
