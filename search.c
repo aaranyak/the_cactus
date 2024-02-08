@@ -32,9 +32,9 @@
 #define R 2 /* Null move reduction */
 #define MAX_EXTENSIONS 10
 
-int thread_count = 8; /* This should not exist */
+int thread_count = 1; /* This should not exist */
 
-result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_search, int max_time, move_t force_move, int ply, int extensions, int randomize_search) {
+result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_search, int max_time, move_t force_move, int ply, int extensions, int randomize_search, int main_thread) {
     /* Generate moves, recursively generate moves from resulting positions until
      * maximum depth is reached, and then evaluate the position, use minmax
      * algorithm to find best evaluation and move.
@@ -47,7 +47,7 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
     entry_t entry = get_entry(board->key); /* Try getting the entry from the tp-table */
     if (!invalid_entry(entry) && entry.depth >= depth && entry.node_type == node_pv) { /* If the entry is there, and the depth of the entry is greater than or equal to the current depth, and this is a pv node */
         // Use the evaluation from the table
-        hash_move_used++;
+        if (main_thread)hash_move_used++;
         return (result_t){entry.eval, entry.best_move}; /* Return the results from the table entry */
     }
 
@@ -96,6 +96,7 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
             /* Order moves with the forced move at first */
             order_moves(&legal_moves, board, 1, force_move, ply); /* Order Moves */
         } else if (invalid_entry(entry)) { /* If there is no hash move */
+            if (main_thread)hash_move_used++;
             /* Use the normal move ordering technique */
             order_moves(&legal_moves, board, 0, 0, ply); /* Order moves to increase number of cutoffs during search */
         } else { /* If there is a hash move available */
@@ -119,7 +120,7 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
             board->key ^= side_hash; /* Hash */
             board->moves++; /* Moves */
             // Do the actual search.
-            result = search(board, null_move_reduction, -beta, -alpha, interrupt_search, max_time, 0, ply + 1, extensions, 0); /* Recursively call itself to search at an even higher depth */
+            result = search(board, null_move_reduction, -beta, -alpha, interrupt_search, max_time, 0, ply + 1, extensions, 0, main_thread); /* Recursively call itself to search at an even higher depth */
             board->side ^= 1; /* Toggle side */
             board->key ^= side_hash; /* Yep... */
             board->moves--; /* Minus Minus */
@@ -156,11 +157,11 @@ result_t search(Bitboard *board, int depth, int alpha, int beta, int *interrupt_
                 if (index > 15) reduction = 2; /* For last few moves, reduce by two counts */
             }
 
-            result = search(board, cutoff(depth - 1 - reduction + extension), -beta, -alpha, interrupt_search, max_time, 0, ply + 1, extensions + extension, 0); /* Recursively call itself to search at an even higher depth */
+            result = search(board, cutoff(depth - 1 - reduction + extension), -beta, -alpha, interrupt_search, max_time, 0, ply + 1, extensions + extension, 0, main_thread); /* Recursively call itself to search at an even higher depth */
 
             if (reduction && -result.evaluation > alpha) /* If a reduced move increases alpha */
                 /* Then do another search to the full depth */
-                result = search(board, depth - 1, -beta, -alpha, interrupt_search, max_time, 0, ply + 1, extensions, 0); /* Recursively call itself to search at an even higher depth */
+                result = search(board, depth - 1, -beta, -alpha, interrupt_search, max_time, 0, ply + 1, extensions, 0, main_thread); /* Recursively call itself to search at an even higher depth */
 
             unmake_move(board, move, &enpas, &castling, &key, &ps_eval); /* Unmake the move on the board */
             
@@ -209,10 +210,11 @@ struct helper_thread_data {
 };
 void *start_helper_thread(void *uncasted_data) {
     /* Starts the helper search */
+    printf("Started Helper Thread\n");
     struct helper_thread_data *data = (struct helper_thread_data*)uncasted_data; /* Cast the data */
     Bitboard board; /* This is a copy of the actual board, so as not to corrupt it */
     memcpy(&board, data->board, sizeof(Bitboard)); /* Copy the regular board into the copy */
-    search(&board, data->depth, data->alpha, data->beta, data->interrupt_search, data->max_time, 0, 1, 0, 1); /* Helper thread with randomized move order */
+    search(&board, data->depth, data->alpha, data->beta, data->interrupt_search, data->max_time, 0, 1, 0, 1, 0); /* Helper thread with randomized move order */
     free(data); /* Because we don't need it anymore */
 }
 
@@ -220,23 +222,24 @@ result_t start_parallel_search(Bitboard *board, int depth, int alpha, int beta, 
     /* Starts a parallel search using multiple threads */
     pthread_t helper_threads[MAX_THREADS] = {0}; /* Maximum number of threads */
     struct helper_thread_data *data; /* Data for the threads to use */
-    pthread_setconcurrency(3);
     // Create all the threads
+    pthread_setconcurrency(1); /* Who knows what this might do */
     num_threads = min(num_threads, MAX_THREADS); /* Limit the number of threads */
     for (int i = 0; i < num_threads; i++) { /* Start creating helper threads */
         // Loop through each of them.
         data = (struct helper_thread_data*)malloc(sizeof(struct helper_thread_data)); /* Allocate memory for the data to pass to the thread */
         data->board = board; data->depth = depth; data->alpha = alpha; data->beta = beta; data->interrupt_search = interrupt_search; data->max_time = max_time; /* Put data in passing struct */
         pthread_create(&helper_threads[i] /* Put it here */, NULL, start_helper_thread, data); /* Start the thread */
+        pthread_detach(helper_threads[i]); /* Detach the thread, so that it hopefully helps */
     }
 
-    result_t result = search(board, depth, alpha, beta, interrupt_search, (depth >= 4) ? max_time : INF, (depth > 1) ? force_move : 0, 1, 0, 0); /* Run the main thread with a force-move */
+    result_t result = search(board, depth, alpha, beta, interrupt_search, (depth >= 4) ? max_time : INF, (depth > 1) ? force_move : 0, 1, 0, 0, 1); /* Run the main thread with a force-move */
 
-    // Join all the threads
-    void *who_cares; /* We don't need a return value */
-    for (int i = 0; i < num_threads; i++) { /* Loop through all the threads */
-        pthread_join(helper_threads[i], &who_cares); /* Exit the thread */
-    }
+    // // Join all the threads
+    // void *who_cares; /* We don't need a return value */
+    // for (int i = 0; i < num_threads; i++) { /* Loop through all the threads */
+    //     pthread_join(helper_threads[i], &who_cares); /* Exit the thread */
+    // }
 
     return result; /* Don't be useless */
 }
