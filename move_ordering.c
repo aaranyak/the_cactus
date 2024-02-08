@@ -93,6 +93,15 @@ void order_moves(move_list_t *move_list, Bitboard *board, int use_hash_move, mov
     sort_moves(move_list, move_scores); /* Sort the moves */
 }
 
+void randomize_moves(move_list_t *moves) {
+    /* Reorder moves randomly */
+    int scores[moves->count]; /* Scores */
+    for (int i = 0; i < moves->count; i++) {
+        scores[i] = clock() % moves->count; /* Wow */
+    }
+    sort_moves(moves, scores); /* Randomly order moves */
+}
+
 void sort_moves(move_list_t *move_list, int scores[]) {
     /* Sorts a list of moves based on the score */
     int swap_value; /* Use in loop */

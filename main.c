@@ -21,7 +21,8 @@
  *  -> Iterative deepening method
  *  -> Written in C
 */
-
+#define _OPEN_THREADS 2
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -67,7 +68,7 @@ int main(int argc, char **argv) {
     // Initialize the board */
     Bitboard board = {0,0,0,0}; /* Allocate space for bitboard */
     init_board(&board, initial_state, 1);
-    
+
     // Start a game with the GUI 
     int human_side = 3; /* The side of the human to play */
     char log_filepath[512] = {0}; /* Log file path */

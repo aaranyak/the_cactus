@@ -51,10 +51,11 @@ typedef struct shared_entry_t {
 
 #define invalid_entry(e) (e.depth == -1)
 #define EMPTY_ENTRY (entry_t){0,0,-1,0,0,0}
+int corrupted_entry(shared_entry_t entry);
 void add_entry(U64 key, int eval, int depth, int age, move_t best_move, node_t node_type);
 entry_t get_entry(U64 key);
 void init_tp_table();
 extern int tp_size;
-extern entry_t tp_table[]; /* Transposition Table */
+extern shared_entry_t tp_table[]; /* Transposition Table */
 extern int hash_move_used;
 #endif

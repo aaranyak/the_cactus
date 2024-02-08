@@ -24,22 +24,23 @@ int tp_size = (TP_SIZE  * 1000000) / sizeof(shared_entry_t); /* Set TP Table Siz
 void init_tp_table() {
     /* Resets all the values in the TP Table */
     for (int i = 0; i < tp_size; i++) { /* Loop through all the entries in the tp_table */
-        tp_table[i] = {0, 0, 0, 0}; /* Corrupted entry, basically (unless by some extreme coincidence the data happens to be same as the key */
+        tp_table[i] = (shared_entry_t){1, 2, 3, 4, 5}; /* Corrupted entry, basically (unless by some extreme coincidence the data happens to be same as the key */
     }
 }
 
-inline int corrupted_entry(shared_entry_t entry) {
+int corrupted_entry(shared_entry_t entry) {
     /* Detects if an entry is corrupted */
-    if (entry.key_1 ^ entry.data_1 != entry.key) return 1; /* Entry has been corrupted */
-    if (entry.key_2 ^ entry.data_2 != entry.key) return 1; /* Entry has been corrupted */
-    return 0; /* Entry has not been corrupted */
+    if ((entry.key_1 ^ entry.data_1) != entry.key) return 1;
+    if ((entry.key_2 ^ entry.data_2) != entry.key) return 1;
+    return 0;
+}
 
-int to_replace(int depth, int index) { 
+int to_replace(int original_depth, int index) { 
     /* Whether to replace the TP Table entry or not */
     shared_entry_t original = tp_table[index]; /* Retrieve what was already there */
-    if (corrupted_entry(entry)) return 1; /* If entry is corrupted, automatically replace */
     int depth = (original.data_2 & EM_DEPTH) >> ES_DEPTH; /* Get the previous depth */
-    else if (entry.depth >= depth) return 1;
+    if (corrupted_entry(original)) return 1; /* If entry is corrupted, automatically replace */
+    else if (original_depth >= depth) return 1;
     else return 0; /* Otherwise don't replace */
 }
 
@@ -81,5 +82,12 @@ entry_t get_entry(U64 key) {
         /* Retrieve the values */
         entry_t entry = EMPTY_ENTRY; /* We need to initialize it somehow */
         entry.key = key; /* I don't think it is necessary */
-        entry.eval = share
+        entry.eval = (shared_entry.data_1 & EM_EVAL) >> ES_EVAL; /* Same method to extract the eval from the data */
+        entry.best_move = (shared_entry.data_1 & EM_MOVE) >> ES_MOVE; /* Extract move */
+        entry.depth = (shared_entry.data_2 & EM_DEPTH) >> ES_DEPTH; /* Extract the depth from the shared entry */
+        entry.age = (shared_entry.data_2 & EM_AGE) >> ES_AGE; /* Extract the age */
+        entry.node_type = (shared_entry.data_2 & EM_TYPE) >> ES_TYPE; /* Extract the entry node type */
+
+        return entry; /* As a normal type of entry */
+    } else return EMPTY_ENTRY; /* Because entry was corrupted or not found */
 }
