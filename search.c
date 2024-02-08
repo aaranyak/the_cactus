@@ -210,7 +210,6 @@ struct helper_thread_data {
 };
 void *start_helper_thread(void *uncasted_data) {
     /* Starts the helper search */
-    printf("Started Helper Thread\n");
     struct helper_thread_data *data = (struct helper_thread_data*)uncasted_data; /* Cast the data */
     Bitboard board; /* This is a copy of the actual board, so as not to corrupt it */
     memcpy(&board, data->board, sizeof(Bitboard)); /* Copy the regular board into the copy */
@@ -244,6 +243,32 @@ result_t start_parallel_search(Bitboard *board, int depth, int alpha, int beta, 
     return result; /* Don't be useless */
 }
 
+id_result_t iterative_deepening_interruptable(Bitboard *board, int search_time, int *interrupt_search) {
+    /* Searches the board using iterative deepening */
+    int depth = 0; /* Current depth */
+    int max_time; /* Maximum time */
+    *interrupt_search = 0; /* Whether to interrupt the search */
+    id_result_t result; /* The final iterative deepening result */
+    result_t current_result; /* The Current Result */
+    
+    max_time = (int)time(NULL); /* Get the current time */
+    max_time += search_time; /* Add the time taken to search */
+    hash_move_used = 0;
+    while (!*interrupt_search) { /* Until the search has not been interrupted */
+        // Set the previous result
+        // Do the search
+        depth++; /* Increase the depth */
+        clear_killers(); /* Clear killer moves */
+        clear_history(); /* Clear history heuristic */
+        current_result = start_parallel_search(board, depth, -INF, INF, interrupt_search, max_time, result.move, thread_count); /* Search at the current depth */
+        if (current_result.move == 0) break; /* If the search is interrupted before anything happens, get out. */
+        result.evaluation = current_result.evaluation;
+        result.move = current_result.move;
+        result.depth = depth;
+    }
+    return result;
+}
+
 id_result_t iterative_deepening(Bitboard *board, int search_time) {
     /* Searches the board using iterative deepening */
     int depth = 0; /* Current depth */
@@ -267,6 +292,5 @@ id_result_t iterative_deepening(Bitboard *board, int search_time) {
         result.move = current_result.move;
         result.depth = depth;
     }
-    printf("hash move used - %d\n", hash_move_used);
     return result;
 }

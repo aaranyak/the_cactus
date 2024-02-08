@@ -21,8 +21,7 @@
  *  -> Iterative deepening method
  *  -> Written in C
 */
-#define _OPEN_THREADS 2
-#include <pthread.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -45,10 +44,17 @@
 #include "zobrist_hash.h"
 #include "tp_table.h"
 #include "gui_game.h"
+#include "uci.h"
 #define INF INT_MAX
+
+#define UCI
 
 int main(int argc, char **argv) {
     /* Run chess engine */
+    printf("The Cactus - A Chess Engine that is supposed to defeat humans in chess\n");
+#ifdef UCI
+    return uci_engine(); /* Run the UCI engine */
+#endif
 
     // The board state to start with
     char initial_state[64] = {
