@@ -43,7 +43,7 @@
 #include "queen_moves.h"
 #include "zobrist_hash.h"
 #include "tp_table.h"
-#include "gui_game.h"
+//#include "gui_game.h"
 #define INF INT_MAX
 
 int main(int argc, char **argv) {
@@ -86,7 +86,8 @@ int main(int argc, char **argv) {
         }
     }
     
-    if (human_side == 3) return launch_options(&board, argc, argv); /* Options Menu */
+    //if (human_side == 3) return launch_options(&board, argc, argv); /* Options Menu */
     
-    return launch_gui(&board, argc, argv, human_side, 10, to_log ? log_filepath : 0);
+    play_game(&board, human_side);
+    return 0;
 }

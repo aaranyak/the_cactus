@@ -57,7 +57,7 @@ void print_move(move_t move) {
     else if (move & MM_PRO) printf("Move %s from %s to %s and promote to %s.", pieces[(move & MM_PIECE) >> MS_PIECE], from, to, pieces[(move & MM_PPP) >> MS_PPP]);
 
     else if (move & MM_CAP) printf("Move %s from %s to %s, capturing %s.", pieces[(move & MM_PIECE) >> MS_PIECE], from, to, pieces[(move & MM_EAT) >> MS_EAT]);
-    else printf("Move %s from %s to %s.", pieces[(move & MM_PIECE) >> MS_PIECE], from, to);
+    else printf("Move %s from %s to %s.\n", pieces[(move & MM_PIECE) >> MS_PIECE], from, to);
 }
 
 

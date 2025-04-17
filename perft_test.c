@@ -27,6 +27,7 @@ int count_moves(Bitboard *board, int depth); /* Forward declaration */
 void do_test(Bitboard *board, int maxdepth); /* Ditto */
 
 void play_game(Bitboard *board, int side) {
+    render_board(board);
     while (1) {
         if (board->side == side) {
             /* Human move */
@@ -38,6 +39,7 @@ void play_game(Bitboard *board, int side) {
             char move_title[300];
             printf("Enter move: ");
             fgets(move_title, 300, stdin);
+            if (move_title[strlen(move_title) - 1] == '\n') move_title[strlen(move_title) - 1] = '\0';
             move_list_t moves = {0,0};
             generate_moves(board, &moves);
             for (int i = 0; i < moves.count; i++) {
