@@ -25,5 +25,11 @@
  - **Null Move Pruning**
 
 ### Evaluation Function
+ - **Add score for total material**
+ - **Piece square tables but only during the opening**
+ - **Mop-up evaluation includes a distance of king from edge of board, and pawn height**
+ - **King safety eval for attacked squares around king**
 
 ### Transposition Table
+ - **Transporition table 256 megabytes large**
+ - **Zobrist hashing for generating keys**
