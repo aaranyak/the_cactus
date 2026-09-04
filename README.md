@@ -10,6 +10,20 @@
  - **The moves for sliding pieces (queen, rook, bishop) are generated using magic bitboards, a kind of hash table**
  - **The legality of a move is tested by playing the move, and testing if that threatens the king**.
 
-### Search Function
+### Search Optimisations
+ - **The move ordering scheme totals scores for**
+     -  Move on hash table (first priority)
+     -  Capture bonus by captured value minus capturer value
+     -  If pawn is promoted then value of promoted piece
+     -  Extra bonus for killer moves
+     -  Penalty for possible capture on moving
+ - **After searching to the maximum depth, the program runs a quiescence search**
+     - Use of SEE to attempt an early cuttoff
+     - Delta pruning to attempt early cuttoff
+ - **Search extensions for check**
+ - **Late Move Reductions with two reduction depths**
+ - **Null Move Pruning**
 
 ### Evaluation Function
+
+### Transposition Table
